@@ -125,6 +125,7 @@ do
 done
 
 echo "Allowing quicklook plugins ..."
+mkdir ~/Library/QuickLook
 xattr -d -r com.apple.quarantine ~/Library/QuickLook
 echo "Restarting the finder ..."
 killall Finder
