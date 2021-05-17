@@ -2,8 +2,4 @@
 #!/bin/bash
 
 brew bundle --no-lock --file={{ .chezmoi.homedir }}/Brewfile.local
-bw login {{ .email }} --method 3
-
-# Unlock doesn't automatically set session in ENV
-#bw unlock
 {{ end -}}
