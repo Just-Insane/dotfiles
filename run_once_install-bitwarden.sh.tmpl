@@ -1,8 +1,4 @@
 #!/bin/sh
-bw login {{ .email }} --method 3
-
-# Unlock doesn't automatically set session in ENV
-#bw unlock
 
 # write Kube Config and SSH Config
 bw get attachment config --itemid 638a2ab7-676a-44ca-9f3e-ad2a015b3687 --output {{ .chezmoi.homedir }}/.kube/config
