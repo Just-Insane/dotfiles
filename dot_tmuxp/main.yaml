@@ -1,0 +1,10 @@
+session_name: main
+windows:
+  - panes:
+    - null
+  - window_name: spt
+    panes:
+      - spt
+  - window_name: tuir
+    panes:
+      - tuir

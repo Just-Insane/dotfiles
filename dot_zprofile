@@ -1,0 +1,23 @@
+export GPG_TTY="$(tty)"
+export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+gpgconf --launch gpg-agent
+
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+export PATH="/usr/local/opt/gnu-getopt/bin:$PATH"
+export PATH=/usr/local/bin:$PATH
+export PATH=/Users/justin/Library/Python/3.7/bin:$PATH
+
+export PATH="/Users/justin/go/bin:$PATH"
+
+##
+# Your previous /Users/justin/.bash_profile file was backed up as /Users/justin/.bash_profile.macports-saved_2019-05-16_at_14:28:03
+##
+
+# MacPorts Installer addition on 2019-05-16_at_14:28:03: adding an appropriate PATH variable for use with MacPorts.
+export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+# Finished adapting your PATH environment variable for use with MacPorts.
+
+
+export PATH=/usr/local/Cellar/ruby/2.4.1_1/bin:$PATH

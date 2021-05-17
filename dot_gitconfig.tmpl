@@ -1,0 +1,23 @@
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[user]
+	name = Justin Guathier
+	email = "{{ .email }}"
+	signingkey = 0x1BBC60893E1AB145
+[commit]
+	gpgsign = true
+[init]
+	templatedir = ~/.git-templates
+	defaultBranch = main
+[diff "sopsdiffer"]
+	textconv = sops -d
+[core]
+	editor = code --wait --new-window
+	excludesfile = ~/.gitignore
+[gpg]
+	program = gpg
+[credential]
+	helper = osxkeychain
