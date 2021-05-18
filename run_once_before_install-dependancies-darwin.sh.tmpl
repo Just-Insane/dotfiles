@@ -1,8 +1,15 @@
 {{- if (eq .chezmoi.os "darwin") -}}
 #!/bin/bash
 
-# Install Brew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# Install or Update Brew
+
+which -s brew
+if [[ $? != 0 ]] ; then
+    # Install Homebrew
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+else
+    brew update
+fi
 
 brew install bitwarden-cli || true
 brew install gnupg || true
