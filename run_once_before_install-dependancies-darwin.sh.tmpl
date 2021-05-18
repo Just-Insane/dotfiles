@@ -11,5 +11,6 @@ brew install pinentry-mac || true
 brew install --cask iterm2 || true
 
 # Install Oh-My-ZSH
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+DIR="$HOME/.oh-my-zsh"
+[ ! -d "$DIR" ] && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 {{ end -}}
