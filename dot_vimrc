@@ -130,3 +130,6 @@ function! XTermPasteBegin()
 endfunction
 
 autocmd BufWritePost ~/.local/share/chezmoi/* ! chezmoi apply --source-path %
+
+set ttymouse=xterm2
+set mouse=a

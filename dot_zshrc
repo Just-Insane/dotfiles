@@ -148,9 +148,6 @@ PROMPT=$PROMPT'$(kube_ps1) '
 alias ph="bash ~/.config/scripts/powerhungry.sh"
 alias ps="bash ~/.config/scripts/powersaving.sh"
 alias ll="ls -lah"
-alias   del="rmtrash"
-alias trash="rmtrash"
-alias rm="echo Use 'del', or the full path i.e. '/bin/rm'"
 if [ $( echo "$OSTYPE" | grep 'darwin' ) ] ; then
   source /Users/justin/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
   export PATH="/usr/local/opt/helm@2/bin:$PATH"
