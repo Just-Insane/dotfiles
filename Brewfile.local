@@ -225,6 +225,7 @@ brew "rigellute/tap/spotify-tui"
 brew "theseal/ssh-askpass/ssh-askpass"
 cask "authy"
 cask "blackhole-2ch"
+cask "bettertouchtool"
 cask "cscreen"
 cask "discord"
 cask "docker"
@@ -250,6 +251,7 @@ cask "quicklook-json"
 cask "quicklookase"
 cask "spotify"
 cask "vlc"
+cask "visual-studio-code"
 mas "AdGuard for Safari", id: 1440147259
 mas "Apple Configurator 2", id: 1037126344
 mas "BetterSnapTool", id: 417375580
