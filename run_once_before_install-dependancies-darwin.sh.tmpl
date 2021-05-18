@@ -1,0 +1,13 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+#!/bin/bash
+
+# Install Brew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+brew install bitwarden-cli || true
+brew install gnupg || true
+brew install pinentry-mac || true
+brew install --cask iterm2 || true
+
+#brew bundle --no-lock --file={{ .chezmoi.sourceDir }}/Brewfile.local
+{{ end -}}
