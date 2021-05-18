@@ -2,4 +2,6 @@
 
 echo "Logging into Bitwarden..."
 bw login {{ .email }} --method 3 || echo "Already logged in..."
+echo "Exporting BW_SESSION"
 export BW_SESSION=$( bw unlock --raw )
+echo "BW_SESSION exported"
