@@ -9,5 +9,6 @@ brew install gnupg || true
 brew install pinentry-mac || true
 brew install --cask iterm2 || true
 
-#brew bundle --no-lock --file={{ .chezmoi.sourceDir }}/Brewfile.local
+# Install Oh-My-ZSH
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 {{ end -}}
