@@ -3,11 +3,21 @@
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
 
+ (defun unicode-fonts-setup-h (frame)
+    "Run unicode-fonts-setup, then remove the hook."
+    (progn
+      (select-frame frame)
+      (unicode-fonts-setup)
+      (message "Removing unicode-fonts-setup to after-make-frame-functions hook")
+      (remove-hook 'after-make-frame-functions 'unicode-fonts-setup-h)
+      ))
+
+  (add-hook 'after-make-frame-functions 'unicode-fonts-setup-h nil)
 
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
 ;; clients, file templates and snippets. It is optional.
-(setq user-full-name "John Doe"
-      user-mail-address "john@doe.com")
+(setq user-full-name "Jax Gauthier"
+      user-mail-address "jax@gauthier.id")
 
 ;; Doom exposes five (optional) variables for controlling fonts in Doom:
 ;;
