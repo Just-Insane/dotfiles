@@ -1,0 +1,27 @@
+#+title: ReadMe
+
+* Dotfiles in Bare Git Repository
+
+This config is based on this [[https://www.atlassian.com/git/tutorials/dotfiles][blog post]] and this [[https://news.ycombinator.com/item?id=11070797][Hacker News thread]].
+
+* Starting from Scratch
+
+#+begin_src shell
+git init --bare $HOME/.cfg
+alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+config config --local status.showUntrackedFiles no
+echo "alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'" >> $HOME/.bashrc
+#+end_src
+
+** Example commands
+
+#+begin_src shell
+config status
+config add .vimrc
+config commit -m "Add vimrc"
+config add .bashrc
+config commit -m "Add bashrc"
+config push
+#+end_src
+
+* Installing dotfiles on a new system

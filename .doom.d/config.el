@@ -60,18 +60,18 @@
 (setq user-full-name "Jax Gauthier"
       user-mail-address "jax@gauthier.id")
 
- (defun unicode-fonts-setup-h (frame)
-    "Run unicode-fonts-setup, then remove the hook."
-    (progn
-      (select-frame frame)
-      (unicode-fonts-setup)
-      (message "Removing unicode-fonts-setup to after-make-frame-functions hook")
-      (remove-hook 'after-make-frame-functions 'unicode-fonts-setup-h)
-      ))
+(defun unicode-fonts-setup-h (frame)
+  "Run unicode-fonts-setup, then remove the hook."
+  (progn
+    (select-frame frame)
+    (unicode-fonts-setup)
+    (message "Removing unicode-fonts-setup to after-make-frame-functions hook")
+    (remove-hook 'after-make-frame-functions 'unicode-fonts-setup-h)
+    ))
 
-  (add-hook 'after-make-frame-functions 'unicode-fonts-setup-h nil)
+(add-hook 'after-make-frame-functions 'unicode-fonts-setup-h nil)
 
-(setq doom-theme 'doom-theme)
+(setq doom-theme 'doom-one)
 
 (setq display-line-numbers-type t)
 
