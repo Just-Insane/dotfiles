@@ -194,6 +194,7 @@ All necessary settings are therefore set by hand as part of this configuration f
 
 This code is written to the =init.el= to select which modules to load. Written here as-is for now, as it is quite well structured and clear.
 
+#+html: <details><summary>init.el</summary>
 #+begin_src emacs-lisp :tangle init.el
 (doom! :input
        ;;bidi              ; (tfel ot) thgir etirw uoy gnipleh
@@ -374,6 +375,7 @@ This code is written to the =init.el= to select which modules to load. Written h
        ;;literate
        (default +bindings +smartparens))
 #+end_src
+#+html: </details>
 
 * General configuration
 
@@ -503,6 +505,7 @@ Tangle-on-save has revolutionized my literate programming workflow. It automatic
 #+begin_src emacs-lisp :tangle packages.el
 (package! org-auto-tangle)
 #+end_src
+
 #+begin_src emacs-lisp
 (use-package! org-auto-tangle
   :defer t
@@ -517,10 +520,11 @@ Tangle-on-save has revolutionized my literate programming workflow. It automatic
 
 - [[https://github.com/spotify/dockerfile-mode][Dockerfile mode]]:
 
-  #+begin_src emacs-lisp :tangle packages.el
+#+begin_src emacs-lisp :tangle packages.el
 (package! dockerfile-mode)
-  #+end_src
-  #+begin_src emacs-lisp
+#+end_src
+
+#+begin_src emacs-lisp
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (put 'dockerfile-image-name 'safe-local-variable #'stringp)
 #+end_src
@@ -530,28 +534,29 @@ This prevents the =docker= command from producing ANSI sequences during the imag
 #+begin_src emacs-lisp
 (defun plain-pipe-for-process () (setq-local process-connection-type nil))
 (add-hook 'compilation-mode-hook 'plain-pipe-for-process)
-  #+end_src
+#+end_src
 
 - I find =iedit= absolutely indispensable when coding. In short: when you hit =Ctrl-;=, all occurrences of the symbol under the cursor (or the current selection) are highlighted, and any changes you make on one of them will be automatically applied to all others. It's great for renaming variables in code, but it needs to be used with care, as it has no idea of semantics, it's  a plain string replacement, so it can inadvertently modify unintended parts of the code.
 
-  #+begin_src emacs-lisp :tangle packages.el
+#+begin_src emacs-lisp :tangle packages.el
 (package! iedit)
-  #+end_src
-  #+begin_src emacs-lisp
+#+end_src
+
+#+begin_src emacs-lisp
 (use-package! iedit
   :defer
   :config
   (set-face-background 'iedit-occurrence "Magenta")
   :bind
   ("C-;" . iedit-mode))
-  #+end_src
+#+end_src
 
 - A useful macro (sometimes) for timing the execution of things. From [[https://stackoverflow.com/questions/23622296/emacs-timing-execution-of-function-calls-in-emacs-lisp][StackOverflow]].
 
-  #+begin_src emacs-lisp
+#+begin_src emacs-lisp
 (defmacro zz/measure-time (&rest body)
   "Measure the time it takes to evaluate BODY."
   `(let ((time (current-time)))
      ,@body
      (float-time (time-since time))))
-  #+end_src
+#+end_src
