@@ -1,0 +1,88 @@
+:DOC-CONFIG:
+# Tangel by default to .bashrc, which is the default *rc file for bash
+#+property: header-args:shell :tangle .bashrc
+#+property: header-args: :mkdirp yes :comments no
+#+sartup: fold
+:END:
+
+#+title: bashrc literate config
+#+author: Jax Gauthier
+#+email: jax@gauthier.id
+
+This is my `.bashrc` configuration. From this org file, my `.bashrc` file will be generated.
+
+* Default config
+
+This is the default `.bashrc` that comes with Fedora 37
+
+#+begin_src shell
+# .bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+
+# User specific environment
+if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]
+then
+    PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+fi
+export PATH
+
+# Uncomment the following line if you don't like systemctl's auto-paging feature:
+# export SYSTEMD_PAGER=
+
+# User specific aliases and functions
+if [ -d ~/.bashrc.d ]; then
+	for rc in ~/.bashrc.d/*; do
+		if [ -f "$rc" ]; then
+			. "$rc"
+		fi
+	done
+fi
+
+unset rc
+#+end_src
+
+* Emacs config
+
+This is config for getting emacs and emacs client working, including aliases.
+
+#+begin_src shell
+export PATH="~/.emacs.d/bin:$PATH"
+
+export PATH="/usr/texbin:$PATH"
+
+#export ALTERNATE_EDITOR=""
+export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
+export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
+
+alias ec="emacsclient -c -a emacs -n"
+#+end_src
+
+* Dotfiles config
+
+This alias allows me to manage dotfiles as outlined in my [[https://github.com/Just-Insane/dotfiles/blob/main/README.org][dotfiles]] repository.
+
+#+begin_src shell
+alias config='/usr/bin/git --git-dir=/home/jax/.cfg/ --work-tree=/home/jax'
+#+end_src
+
+* GPG config
+
+Config for using GPG and SSH with my Yubikey
+
+#+begin_src shell
+export GPG_TTY="$(tty)"
+export SSH_AUTH_SOCK="/run/user/$UID/gnupg/S.gpg-agent.ssh"
+gpg-connect-agent updatestartuptty /bye > /dev/null
+#+end_src
+
+* XAuthority config
+
+I'm not 100% sure this is required, but I was having an issue similar to [[https://unix.stackexchange.com/questions/15495/emacs-cant-open-display][this post]] and it's resolved now.
+
+#+begin_src shell
+export XAUTHORITY=~/.Xauthority
+#+end_src

@@ -25,7 +25,7 @@ Doom Emacs uses three config files:
 - =packages.el= defines which [[https://github.com/hlissner/doom-emacs/blob/develop/docs/getting_started.org#package-management][packages]] should be installed, beyond those that are installed and loaded as part of the enabled modules.
 - =config.el= contains all [[https://github.com/hlissner/doom-emacs/blob/develop/docs/getting_started.org#configuring-doom][custom configuration]] and code.
 
-All the config files are generated from this Org files, to try and make its meaning as clear as possible. All =package!= declarations are written to =packages.el=, all other LISP code is writen to =config.el=.
+All the config files are generated from this Org files, to try and make its meaning as clear as possible. All =package!= declarations are written to =packages.el=, all other LISP code is written to =config.el=.
 
 ** Config file headers
 
@@ -262,7 +262,7 @@ This code is written to the =init.el= to select which modules to load. Written h
 
        :checkers
        syntax              ; tasing you for every semicolon you forget
-       (spell +flyspell +everywhere) ; tasing you for misspelling mispelling
+       (spell +flyspell +everywhere +hunspell) ; tasing you for misspelling mispelling
        grammar           ; tasing grammar mistake every you make
 
        :tools
