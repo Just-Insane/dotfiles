@@ -86,9 +86,6 @@
 
 (add-hook! org-mode (electric-indent-local-mode -1))
 
-(setq org-roam-directory "~/Sync/org-roam/")
-(setq +org-roam-open-buffer-on-find-file t)
-
 (after! org-agenda
   ;; (setq org-agenda-prefix-format
   ;;       '((agenda . " %i %-12:c%?-12t% s")
@@ -115,6 +112,27 @@
   :config
   (setq org-super-agenda-groups '((:auto-dir-name t)))
   (org-super-agenda-mode))
+
+(setq org-roam-directory (file-truename "~/Sync/org-roam"))
+(setq +org-roam-open-buffer-on-find-file t)
+
+(use-package! websocket
+    :after org-roam)
+
+(use-package! org-roam-ui
+    :after org-roam ;; :after org
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+
+(use-package! vulpea
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 
 (use-package! org-auto-tangle
   :defer t

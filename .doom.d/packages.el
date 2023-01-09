@@ -55,6 +55,9 @@
 
 (package! org-super-agenda)
 
+(unpin! org-roam)
+(package! org-roam-ui)
+
 (package! org-auto-tangle)
 
 (package! dockerfile-mode)

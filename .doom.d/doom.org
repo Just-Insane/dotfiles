@@ -447,13 +447,6 @@ Disable [[https://code.orgmode.org/bzg/org-mode/src/master/etc/ORG-NEWS#L323][el
 (add-hook! org-mode (electric-indent-local-mode -1))
 #+end_src
 
-Enable `org-roam` and set the directory.
-
-#+begin_src emacs-lisp
-(setq org-roam-directory "~/Sync/org-roam/")
-(setq +org-roam-open-buffer-on-find-file t)
-#+end_src
-
 ** Tasks and agenda
 
 Customize the agenda display to indent todo items by level to show nesting, and enable showing holidays in the Org agenda display.
@@ -496,6 +489,50 @@ Install and load some custom local holiday lists I'm interested in.
   :config
   (setq org-super-agenda-groups '((:auto-dir-name t)))
   (org-super-agenda-mode))
+#+end_src
+
+** Org-Roam
+
+Enable Org-Roam and set it's directory.
+
+#+begin_src emacs-lisp
+(setq org-roam-directory (file-truename "~/Sync/org-roam"))
+(setq +org-roam-open-buffer-on-find-file t)
+#+end_src
+
+*** Org-Roam-UI
+
+[[https://github.com/org-roam/org-roam-ui][Org-Roam-UI]] is a utility built on top of Org-Roam that creates a UI of your Org-Roam graph. These are the recommended defaults for Doom.
+
+#+BEGIN_SRC emacs-lisp :tangle packages.el
+(unpin! org-roam)
+(package! org-roam-ui)
+#+END_SRC
+
+#+begin_src emacs-lisp
+(use-package! websocket
+    :after org-roam)
+
+(use-package! org-roam-ui
+    :after org-roam ;; :after org
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+#+end_src
+
+*** Vulpea
+
+After coming across Boris Buliga's excellent [[https://d12frosted.io/posts/2020-06-23-task-management-with-roam-vol1.html][Task management with org-roam series]], I will be implementing many of his concepts into my configuration. A lot of the functionality he makes use of builds on top of [[https://github.com/d12frosted/vulpea][Vulpea]].
+
+#+begin_src emacs-lisp
+(use-package! vulpea
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 #+end_src
 
 * Coding
