@@ -53,9 +53,6 @@
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;;(unpin! t)
 
-(package! vulpea
-  :recipe (:host githu :repo "d12frosted/vulpea"))
-
 (package! org-super-agenda)
 
 (unpin! org-roam)
