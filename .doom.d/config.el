@@ -86,8 +86,8 @@
 
 (add-hook! org-mode (electric-indent-local-mode -1))
 
-(use-package! vulpea
-  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
+;(use-package! vulpea
+;  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 
 (after! org-agenda
   (setq org-agenda-include-diary t)
@@ -203,7 +203,7 @@ Refer to `org-agenda-prefix-format' for more information."
 (add-hook 'vulpea-insert-handle-functions
           #'my-vulpea-insert-handle)
 
-(add-to-list 'org-tags-exclude-from-inheritance "project")
+;(add-to-list 'org-tags-exclude-from-inheritance "project")
 
 (defun vulpea-project-p ()
   "Return non-nil if current buffer has any todo entry.

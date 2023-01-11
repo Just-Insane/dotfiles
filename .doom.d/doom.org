@@ -453,12 +453,12 @@ After coming across Boris Buliga's excellent [[https://d12frosted.io/posts/2020-
 
 #+begin_src emacs-lisp :tangle packages.el
 (package! vulpea
-  :recipe (:host github :repo "d12frosted/vulpea"))
+  :recipe (:host githu :repo "d12frosted/vulpea"))
 #+end_src
 
 #+begin_src emacs-lisp
-(use-package! vulpea
-  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
+;(use-package! vulpea
+;  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 #+end_src
 
 
@@ -604,7 +604,7 @@ Automatic Tagging.
 Dynamic & Fast Agenda.
 
 #+begin_src emacs-lisp
-(add-to-list 'org-tags-exclude-from-inheritance "project")
+;(add-to-list 'org-tags-exclude-from-inheritance "project")
 
 (defun vulpea-project-p ()
   "Return non-nil if current buffer has any todo entry.
