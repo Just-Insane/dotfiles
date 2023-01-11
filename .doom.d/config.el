@@ -203,7 +203,7 @@ Refer to `org-agenda-prefix-format' for more information."
 (add-hook 'vulpea-insert-handle-functions
           #'my-vulpea-insert-handle)
 
-;;(add-to-list 'org-tags-exclude-from-inheritance "project")
+(add-to-list 'org-tags-exclude-from-inheritance "project")
 
 (defun vulpea-project-p ()
   "Return non-nil if current buffer has any todo entry.
@@ -289,21 +289,17 @@ tasks."
 
 It is relative to `org-directory', unless it is absolute.")
 
-(setq org-capture-templates
-      '(("t" "todo" plain (file vulpea-capture-inbox-file)
-         "* TODO %?\n%U\n" :clock-in t :clock-resume t)))
-
 (defun vulpea-capture-task ()
   "Capture a task."
   (interactive)
   (org-capture nil "t"))
 
-(setq org-agenda-custom-commands
-      '((" " "Agenda"
-         ((tags
-           "REFILE"
-           ((org-agenda-overriding-header "To refile")
-            (org-tags-match-list-sublevels nil)))))))
+;(setq org-agenda-custom-commands
+;      '((" " "Agenda"
+;         ((tags
+;           "REFILE"
+;           ((org-agenda-overriding-header "To refile")
+;            (org-tags-match-list-sublevels nil)))))))
 
 (setq org-capture-templates
       '(("t" "todo" plain (file vulpea-capture-inbox-file)

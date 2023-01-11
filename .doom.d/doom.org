@@ -452,7 +452,8 @@ Disable [[https://code.orgmode.org/bzg/org-mode/src/master/etc/ORG-NEWS#L323][el
 After coming across Boris Buliga's excellent [[https://d12frosted.io/posts/2020-06-23-task-management-with-roam-vol1.html][Task management with org-roam series]], I will be implementing many of his concepts into my configuration. A lot of the functionality he makes use of builds on top of [[https://github.com/d12frosted/vulpea][Vulpea]].
 
 #+begin_src emacs-lisp :tangle packages.el
-(package! vulpea)
+(package! vulpea
+  :recipe (:host github :repo "d12frosted/vulpea"))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -603,7 +604,7 @@ Automatic Tagging.
 Dynamic & Fast Agenda.
 
 #+begin_src emacs-lisp
-;;(add-to-list 'org-tags-exclude-from-inheritance "project")
+(add-to-list 'org-tags-exclude-from-inheritance "project")
 
 (defun vulpea-project-p ()
   "Return non-nil if current buffer has any todo entry.
@@ -697,21 +698,17 @@ Capture things.
 
 It is relative to `org-directory', unless it is absolute.")
 
-(setq org-capture-templates
-      '(("t" "todo" plain (file vulpea-capture-inbox-file)
-         "* TODO %?\n%U\n" :clock-in t :clock-resume t)))
-
 (defun vulpea-capture-task ()
   "Capture a task."
   (interactive)
   (org-capture nil "t"))
 
-(setq org-agenda-custom-commands
-      '((" " "Agenda"
-         ((tags
-           "REFILE"
-           ((org-agenda-overriding-header "To refile")
-            (org-tags-match-list-sublevels nil)))))))
+;(setq org-agenda-custom-commands
+;      '((" " "Agenda"
+;         ((tags
+;           "REFILE"
+;           ((org-agenda-overriding-header "To refile")
+;            (org-tags-match-list-sublevels nil)))))))
 
 (setq org-capture-templates
       '(("t" "todo" plain (file vulpea-capture-inbox-file)
