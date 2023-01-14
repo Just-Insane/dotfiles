@@ -1,10 +1,42 @@
+:DOC-CONFIG:
+# Tangel by default to .zshrc, which is the default *rc file for ZSH
+#+property: header-args:shell :tangle .zshrc
+#+property: header-args: :mkdirp yes :comments no
+#+sartup: fold
+:END:
+
+#+title: zshrc literate config
+#+author: Jax Gauthier
+#+email: jax@gauthier.id
+
+This is my `.zshrc` configuration. From this org file, my `.zshrc` file will be generated.
+
+* Preamble
+
+The ZSH Config file does not have a linear layout like my [[.bashrc.org][.bashrc.org]] config file due to needing to load P10K configurations near the top.
+
+* Enhancement Config
+
+This is configuration for enhancements such as oh-my-zsh and Powerlevel10K
+
+** Powerlevel10K Instant Prompt
+
+This configuration is required by the Powerlevel10K Instant Prompt feature.
+
+#+begin_src shell
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
+#+end_src
 
+** Default Config
+
+This is the default config that comes with ZSH via Oh-My-ZSH. We are going to modify some of these configuration options below. Note that some default options have been commented out as we will be overriding them, I'll mark these lines with `# Commented_Out`.
+
+#+begin_src shell
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -106,9 +138,19 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+#+end_src
 
+** ZSH Theme
+
+I will be using the Powerlevel10K Theme.
+
+#+begin_src shell
 ZSH_THEME="powerlevel10k/powerlevel10k"
+#+end_src
 
+** Plugins
+
+#+begin_src shell
 plugins=(
   git
   aliases
@@ -134,24 +176,61 @@ plugins=(
   pyenv
   dnf
 )
+#+end_src
 
+** P10K source
+
+Source P10K Config (Set via P10K during configuration)
+
+#+begin_src shell
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+#+end_src
 
+* User Config
+
+** PATH Updates
+
+#+begin_src shell
 export PATH="~/.emacs.d/bin:$PATH"
 export PATH="/usr/texbin:$PATH"
+#+end_src
 
+** Emacs Editor setup
+
+This is for getting emacs and emacsclient working, including aliases.
+
+#+begin_src shell
 #export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
 
 alias ec="emacsclient -c -a emacs -n"
+#+end_src
 
+** Dotfiles config
+
+This alias allows me to manage dotfiles as outlined in my [[https://github.com/Just-Insane/dotfiles/blob/main/README.org][dotfiles]] repository.
+
+#+begin_src shell
 alias config='/usr/bin/git --git-dir=/home/jax/.cfg/ --work-tree=/home/jax'
+#+end_src
 
+** GPG Config
+
+Config for using GPG and SSH with my Yubikey
+
+#+begin_src shell
 export GPG_TTY="$(tty)"
 export SSH_AUTH_SOCK="/run/user/$UID/gnupg/S.gpg-agent.ssh"
 gpg-connect-agent updatestartuptty /bye > /dev/null
+#+end_src
 
+** XAuthority Config
+
+I'm not 100% sure this is required, but I was having an issue similar to [[https://unix.stackexchange.com/questions/15495/emacs-cant-open-display][this post]] and it's resolved now.
+
+#+begin_src shell
 export XAUTHORITY=~/.Xauthority
 . "$HOME/.cargo/env"
+#+end_src

@@ -47,7 +47,7 @@ unset rc
 
 * Emacs config
 
-This is config for getting emacs and emacs client working, including aliases.
+This is config for getting emacs and emacsclient working, including aliases.
 
 #+begin_src shell
 export PATH="~/.emacs.d/bin:$PATH"

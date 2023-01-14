@@ -43,5 +43,3 @@ export SSH_AUTH_SOCK="/run/user/$UID/gnupg/S.gpg-agent.ssh"
 gpg-connect-agent updatestartuptty /bye > /dev/null
 
 export XAUTHORITY=~/.Xauthority
-. "$HOME/.cargo/env"
-source ~/.bash_completion/alacritty
