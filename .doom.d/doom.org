@@ -447,6 +447,21 @@ Disable [[https://code.orgmode.org/bzg/org-mode/src/master/etc/ORG-NEWS#L323][el
 (add-hook! org-mode (electric-indent-local-mode -1))
 #+end_src
 
+** Vulpea
+
+After coming across Boris Buliga's excellent [[https://d12frosted.io/posts/2020-06-23-task-management-with-roam-vol1.html][Task management with org-roam series]], I will be implementing many of his concepts into my configuration. A lot of the functionality he makes use of builds on top of [[https://github.com/d12frosted/vulpea][Vulpea]].
+
+#+begin_src emacs-lisp :tangle packages.el
+(package! vulpea
+  :recipe (:host github :repo "d12frosted/vulpea" :files ("vulpea.el" "vulpea-buffer.el" "vulpea-db.el" "vulpea-meta.el" "vulpea-note.el" "vulpea-select.el" "vulpea-utils.el")))
+#+end_src
+
+#+begin_src emacs-lisp
+(require 'vulpea)
+(use-package! vulpea
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
+#+end_src
+
 ** Tasks and agenda
 
 Customize the agenda display to indent todo items by level to show nesting, and enable showing holidays in the Org agenda display.

@@ -86,6 +86,10 @@
 
 (add-hook! org-mode (electric-indent-local-mode -1))
 
+(require 'vulpea)
+(use-package! vulpea
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
+
 (after! org-agenda
   ;; (setq org-agenda-prefix-format
   ;;       '((agenda . " %i %-12:c%?-12t% s")
