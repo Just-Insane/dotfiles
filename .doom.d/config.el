@@ -86,8 +86,9 @@
 
 (add-hook! org-mode (electric-indent-local-mode -1))
 
-;(use-package! vulpea
-;  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
+(require 'vulpea)
+(use-package! vulpea
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 
 (after! org-agenda
   (setq org-agenda-include-diary t)

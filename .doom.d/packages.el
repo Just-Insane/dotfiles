@@ -54,7 +54,7 @@
 ;;(unpin! t)
 
 (package! vulpea
-  :recipe (:host githu :repo "d12frosted/vulpea"))
+  :recipe (:host github :repo "d12frosted/vulpea" :files ("vulpea.el" "vulpea-buffer.el" "vulpea-db.el" "vulpea-meta.el" "vulpea-note.el" "vulpea-select.el" "vulpea-utils.el")))
 
 (package! org-super-agenda)
 

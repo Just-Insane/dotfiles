@@ -453,14 +453,14 @@ After coming across Boris Buliga's excellent [[https://d12frosted.io/posts/2020-
 
 #+begin_src emacs-lisp :tangle packages.el
 (package! vulpea
-  :recipe (:host githu :repo "d12frosted/vulpea"))
+  :recipe (:host github :repo "d12frosted/vulpea" :files ("vulpea.el" "vulpea-buffer.el" "vulpea-db.el" "vulpea-meta.el" "vulpea-note.el" "vulpea-select.el" "vulpea-utils.el")))
 #+end_src
 
 #+begin_src emacs-lisp
-;(use-package! vulpea
-;  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
+(require 'vulpea)
+(use-package! vulpea
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 #+end_src
-
 
 ** Tasks and agenda
 
