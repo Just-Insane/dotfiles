@@ -24,4 +24,4 @@ config commit -m "Add bashrc"
 config push
 #+end_src
 
-* Installing dotfiles on a new system
+* TODO Installing dotfiles on a new system
