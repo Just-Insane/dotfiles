@@ -885,3 +885,21 @@ This prevents the =docker= command from producing ANSI sequences during the imag
      ,@body
      (float-time (time-since time))))
 #+end_src
+
+- hcl-mode:
+
+A mode for working with HCL (HashiCorp)
+
+#+begin_src emacs-lisp :tangle packages.el
+(package! hcl-mode)
+#+end_src
+
+- terraform-mode:
+
+A mode for working with terraform
+
+#+begin_src emacs-lisp :tangle packages.el
+(package! terraform-mode)
+(package! terraform-doc)
+(package! company-terraform)
+#+end_src

@@ -66,3 +66,9 @@
 (package! dockerfile-mode)
 
 (package! iedit)
+
+(package! hcl-mode)
+
+(package! terraform-mode)
+(package! terraform-doc)
+(package! company-terraform)
