@@ -78,7 +78,63 @@ COMPLETION_WAITING_DOTS="true"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(
+  git
+  #aliases
+  #alias-finder
+  #ansible
+  #bgnotify
+  #colored-man-pages
+  #colorize
+  #command-not-found
+  #common-aliases
+  #compleat
+  #copybuffer
+  #copyfile
+  #copypath
+  #cp
+  #dirhistory
+  #dirpersist
+  #docker
+  #docker-compose
+  #dotenv
+  #doctl
+  #emacs
+  #emoji
+  #emoji-clock
+  #extract
+  #fd
+  #fzf
+  #gh
+  #git-auto-fetch
+  #git-escape-magic
+  #git-extras
+  #git-flow
+  #github
+  #git-hubflow
+  #gitignore
+  #git-prompt
+  #gpg-agent
+  #helm
+  #history
+  #kubectl
+  #man
+  #mosh
+  #nmap
+  #nomad
+  #rsync
+  #ssh-agent
+  #sudo
+  #terraform
+  #thefuck
+  #tmux
+  #tmuxinator
+  #ubuntu
+  #vault
+  #vscode
+  #zsh-interactive-cd
+  #zsh-navigation-tools
+)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -129,9 +185,13 @@ export PATH="/usr/texbin:$PATH"
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
 
-alias ec="emacsclient -c -a emacs -n"
+alias ec="
+export DISPLAY=$(ip route | awk '/^default/{print $3; exit}'):0.0
+export LIBGL_ALWAYS_INDIRECT=1
+setsid emacsclient -c -a emacs -n
+"
 
-alias ema="
+alias emax="
 export DISPLAY=$(ip route | awk '/^default/{print $3; exit}'):0.0
 export LIBGL_ALWAYS_INDIRECT=1
 setsid emacs
@@ -190,6 +250,22 @@ command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
 eval "$(pyenv virtualenv-init -)"
+
+eval $(thefuck --alias)
+
+vterm_printf() {
+    if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ]); then
+        # Tell tmux to pass the escape sequences through
+        printf "\ePtmux;\e\e]%s\007\e\\" "$1"
+    elif [ "${TERM%%-*}" = "screen" ]; then
+        # GNU screen (screen, screen-256color, screen-256color-bce)
+        printf "\eP\e]%s\007\e\\" "$1"
+    else
+        printf "\e]%s\e\\" "$1"
+    fi
+}
+
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

@@ -425,6 +425,11 @@ Enable showing a word count in the modeline. This is only shown for the modes li
 #+begin_src emacs-lisp
 (setq doom-modeline-enable-word-count t)
 #+end_src
+
+#+begin_src emacs-lisp
+(setq! doom-unicode-font (font-spec :family "MesloLGS NF" :size 12))
+#+end_src
+
 * Org
 
 ** General Org Config

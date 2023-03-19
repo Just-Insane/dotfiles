@@ -80,6 +80,8 @@
 
 (setq doom-modeline-enable-word-count t)
 
+(setq! doom-unicode-font (font-spec :family "MesloLGS NF" :size 12))
+
 (setq org-directory "~/Sync/org-roam/")
 
 (setq org-agenda-files (directory-files-recursively "~/Sync/org-roam/" "\\.org$"))
