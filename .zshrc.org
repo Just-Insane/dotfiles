@@ -264,7 +264,7 @@ I'm not 100% sure this is required, but I was having an issue similar to [[https
 
 #+begin_src shell
 export XAUTHORITY=~/.Xauthority
-. "$HOME/.cargo/env"
+#. "$HOME/.cargo/env"
 #+end_src
 
 ** PYENV Config
