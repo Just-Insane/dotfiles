@@ -82,6 +82,8 @@
 
 (setq! doom-unicode-font (font-spec :family "MesloLGS NF" :size 12))
 
+(doom-load-envvars-file "~/.doom.d/myenv")
+
 (setq org-directory "~/Sync/org-roam/")
 
 (setq org-agenda-files (directory-files-recursively "~/Sync/org-roam/" "\\.org$"))

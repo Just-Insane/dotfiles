@@ -15,8 +15,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-# ZSH_THEME="robbyrussell"
-ZSH_THEME="powerlevel10k/powerlevel10k"
+#ZSH_THEME="robbyrussell" # Commented_Out
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -78,69 +77,13 @@ COMPLETION_WAITING_DOTS="true"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(
-  git
-  #aliases
-  #alias-finder
-  #ansible
-  #bgnotify
-  #colored-man-pages
-  #colorize
-  #command-not-found
-  #common-aliases
-  #compleat
-  #copybuffer
-  #copyfile
-  #copypath
-  #cp
-  #dirhistory
-  #dirpersist
-  #docker
-  #docker-compose
-  #dotenv
-  #doctl
-  #emacs
-  #emoji
-  #emoji-clock
-  #extract
-  #fd
-  #fzf
-  #gh
-  #git-auto-fetch
-  #git-escape-magic
-  #git-extras
-  #git-flow
-  #github
-  #git-hubflow
-  #gitignore
-  #git-prompt
-  #gpg-agent
-  #helm
-  #history
-  #kubectl
-  #man
-  #mosh
-  #nmap
-  #nomad
-  #rsync
-  #ssh-agent
-  #sudo
-  #terraform
-  #thefuck
-  #tmux
-  #tmuxinator
-  #ubuntu
-  #vault
-  #vscode
-  #zsh-interactive-cd
-  #zsh-navigation-tools
-)
+#plugins=(git) # Commented_Out
 
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
-export MANPATH="/usr/local/man:$MANPATH"
+# export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
@@ -153,7 +96,7 @@ export MANPATH="/usr/local/man:$MANPATH"
 # fi
 
 # Compilation flags
-export ARCHFLAGS="-arch x86_64"
+# export ARCHFLAGS="-arch x86_64"
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
@@ -164,12 +107,39 @@ export ARCHFLAGS="-arch x86_64"
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-alias ll="ls -alF"
-alias la='ls -A'
-alias l='ls -CF'
+ZSH_THEME="powerlevel10k/powerlevel10k"
 
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+plugins=(
+  git
+  aliases
+  colored-man-pages
+  colorize
+  command-not-found
+  copyfile
+  cp
+  dircycle
+  gpg-agent
+  history
+  rsync
+  safe-paste
+  ssh-agent
+  tmux
+  rbw
+  autojump
+  github
+  gitignore
+  postgres
+  repo
+  python
+  pyenv
+  dnf
+)
 
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+export PATH="~/.emacs.d/bin:$PATH"
+export PATH="/usr/texbin:$PATH"
 export PATH="$HOME/.emacs.d/bin:$PATH"
 
 # User specific environment
@@ -178,40 +148,22 @@ then
     PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 fi
 export PATH
+export PATH="$HOME/.config/emacs/bin:$PATH"
 
-export PATH="/usr/texbin:$PATH"
+export DISPLAY=$(awk '/nameserver/ {print $2; exit;}' /etc/resolv.conf):0.0
 
 #export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
 
-alias ec="
-export DISPLAY=$(ip route | awk '/^default/{print $3; exit}'):0.0
-export LIBGL_ALWAYS_INDIRECT=1
-setsid emacsclient -c -a emacs -n
-"
-
-alias emax="
-export DISPLAY=$(ip route | awk '/^default/{print $3; exit}'):0.0
-export LIBGL_ALWAYS_INDIRECT=1
-setsid emacs
-"
+alias ec="emacsclient -c -a emacs -n"
 
 alias config='/usr/bin/git --git-dir=/home/jax/.cfg/ --work-tree=/home/jax'
 
-# Utilize Yubikey and SSH from Windows
+config_path="C\:/Users/Justin/AppData/Local/gnupg"
 wsl2_ssh_pageant_bin="$HOME/.ssh/wsl2-ssh-pageant.exe"
-if [[ ! -f "${wsl2_ssh_pageant_bin}" ]]; then
-  windows_destination="/mnt/c/Users/Public/Downloads/wsl2-ssh-pageant.exe"
-  if [[ ! -f "${windows_destination}" ]]; then
-    wget -O "$windows_destination" "https://github.com/BlackReloaded/wsl2-ssh-pageant/releases/latest/download/wsl2-ssh-pageant.exe"
-    # Set the executable bit.
-    chmod +x "$windows_destination"
-  fi
-  # Symlink to linux for ease of use later
-  ln -s $windows_destination $wsl2_ssh_pageant_bin
-fi
-
+# SSH Socket
+# Removing Linux SSH socket and replacing it by link to wsl2-ssh-pageant socket
 export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
 if ! ss -a | grep -q "$SSH_AUTH_SOCK"; then
   rm -f "$SSH_AUTH_SOCK"
@@ -221,29 +173,20 @@ if ! ss -a | grep -q "$SSH_AUTH_SOCK"; then
     echo >&2 "WARNING: $wsl2_ssh_pageant_bin is not executable."
   fi
 fi
-
+# GPG Socket
+# Removing Linux GPG Agent socket and replacing it by link to wsl2-ssh-pageant GPG socket
 export GPG_AGENT_SOCK="$HOME/.gnupg/S.gpg-agent"
 if ! ss -a | grep -q "$GPG_AGENT_SOCK"; then
   rm -rf "$GPG_AGENT_SOCK"
-  windows_username=$(cmd.exe /c echo %USERNAME% 2>/dev/null | tr -d '\r')
-  # When gpg4win is installed with scoop or chocolatey, the pipe is in the local directory
-  if [ -d "/mnt/c/Users/$windows_username/AppData/Local/gnupg" ]; then
-    config_path="C:/Users/$windows_username/AppData/Local/gnupg"
-  else
-    config_path="C:/Users/$windows_username/AppData/Roaming/gnupg"
-  fi
-
   if test -x "$wsl2_ssh_pageant_bin"; then
-    (setsid nohup socat UNIX-LISTEN:"$GPG_AGENT_SOCK,fork" EXEC:"$wsl2_ssh_pageant_bin -verbose --gpgConfigBasepath ${config_path} --gpg S.gpg-agent" >/dev/null 2>&1 &)
+    (setsid nohup socat UNIX-LISTEN:"$GPG_AGENT_SOCK,fork" EXEC:"$wsl2_ssh_pageant_bin --gpgConfigBasepath ${config_path} --gpg S.gpg-agent" >/dev/null 2>&1 &)
   else
     echo >&2 "WARNING: $wsl2_ssh_pageant_bin is not executable."
   fi
-  unset windows_username config_path
 fi
 
-unset wsl2_ssh_pageant_bin
-
 export XAUTHORITY=~/.Xauthority
+. "$HOME/.cargo/env"
 
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
@@ -251,7 +194,7 @@ eval "$(pyenv init -)"
 
 eval "$(pyenv virtualenv-init -)"
 
-eval $(thefuck --alias)
+eval $(thefuck --alias fuck)
 
 vterm_printf() {
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ]); then
@@ -266,6 +209,3 @@ vterm_printf() {
 }
 
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
