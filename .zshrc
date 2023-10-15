@@ -114,12 +114,14 @@ export LANG=en_US.UTF-8
 export PATH="~/.emacs.d/bin:$PATH"
 export PATH="/usr/texbin:$PATH"
 export PATH="$HOME/.emacs.d/bin:$PATH"
-
 export PATH="$HOME/.config/emacs/bin:$PATH"
-
-#export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
+
+# https://github.com/drduh/YubiKey-Guide#replace-agents
+export GPG_TTY="$(tty)"
+export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+gpgconf --launch gpg-agent
 
 alias ec="emacsclient -c -a emacs -n"
 
