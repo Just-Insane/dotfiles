@@ -110,29 +110,39 @@ export LANG=en_US.UTF-8
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(
-  git
   aliases
-  colored-man-pages
-  colorize
+  autojump
+  brew
   command-not-found
+  common-aliases
   copyfile
   cp
   dircycle
+  dotenv
+  emacs
+  encode64
+  extract
+  git
+  git-auto-fetch
+  github
+  gitignore
   gpg-agent
   history
+  iterm2
+  kubectl
+  macos
+  postgres
+  pyenv
+  python
+  rbw
+  repo
   rsync
   safe-paste
   ssh-agent
+  thefuck
   tmux
-  rbw
-  autojump
-  github
-  gitignore
-  postgres
-  repo
-  python
-  pyenv
-  dnf
+  web-search
+  zsh-interactive-cd
 )
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
@@ -206,3 +216,5 @@ command -v flux >/dev/null && . <(flux completion zsh)
 
 # kubectl completions
 source <(kubectl completion zsh)
+
+$(brew --prefix)/opt/fzf/install
