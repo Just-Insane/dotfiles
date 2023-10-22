@@ -83,6 +83,11 @@
 (setq! doom-unicode-font (font-spec :family "MesloLGS NF" :size 12))
 
 (doom-load-envvars-file "~/.doom.d/myenv")
+(after! auth-source
+  (setq auth-sources (nreverse auth-sources)))
+
+(require 'age)
+(age-file-enable)
 
 (setq org-directory "~/Sync/org-roam/")
 
@@ -393,11 +398,41 @@ It is relative to `org-directory', unless it is absolute.")
 ;(use-package! vulpea
 ;  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 
+(after! org
+  (use-package! ox-extra
+    :config
+    (ox-extras-activate '(latex-header-blocks ignore-headlines))))
+
+(after! org
+  ;; Import ox-latex to get org-latex-classes and other funcitonality
+  ;; for exporting to LaTeX from org
+  (use-package! ox-latex
+    :init
+    ;; code here will run immediately
+    :config
+    ;; code here will run after the package is loaded
+    (setq org-latex-pdf-process
+          '("pdflatex -interaction nonstopmode -output-directory %o %f"
+            "bibtex %b"
+            "pdflatex -interaction nonstopmode -output-directory %o %f"
+            "pdflatex -interaction nonstopmode -output-directory %o %f"))
+    (setq org-latex-with-hyperref nil) ;; stop org adding hypersetup{author..} to latex export
+    ;; (setq org-latex-prefer-user-labels t)
+
+    ;; deleted unwanted file extensions after latexMK
+    (setq org-latex-logfiles-extensions
+          (quote ("lof" "lot" "tex~" "aux" "idx" "log" "out" "toc" "nav" "snm" "vrb" "dvi" "fdb_latexmk" "blg" "brf" "fls" "entoc" "ps" "spl" "bbl" "xmpi" "run.xml" "bcf" "acn" "acr" "alg" "glg" "gls" "ist" "xmpi")))
+
+    (unless (boundp 'org-latex-classes)
+      (setq org-latex-classes nil))))
+
 (use-package! org-auto-tangle
   :defer t
   :hook (org-mode . org-auto-tangle-mode)
   :config
   (setq org-auto-tangle-default t))
+
+(setq lsp-warn-no-matched-clients nil)
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (put 'dockerfile-image-name 'safe-local-variable #'stringp)

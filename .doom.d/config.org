@@ -272,7 +272,7 @@ This code is written to the =init.el= to select which modules to load. Written h
        ;;debugger          ; FIXME stepping through code, to help you add bugs
        ;;direnv
        (docker +lsp)
-       ;;editorconfig      ; let someone else argue about tabs vs spaces
+       editorconfig      ; let someone else argue about tabs vs spaces
        ;;ein               ; tame Jupyter notebooks with emacs
        (eval +overlay)     ; run code, run (also, repls)
        gist              ; interacting with github gists
@@ -434,6 +434,19 @@ Fix Env (ssh/gpg sockets)
 
 #+begin_src emacs-lisp
 (doom-load-envvars-file "~/.doom.d/myenv")
+(after! auth-source
+  (setq auth-sources (nreverse auth-sources)))
+#+end_src
+
+Add age decryption/encryption support:
+
+#+begin_src emacs-lisp :tangle packages.el
+(package! age)
+#+end_src
+
+#+begin_src emacs-lisp
+(require 'age)
+(age-file-enable)
 #+end_src
 
 * Org
@@ -834,6 +847,45 @@ After coming across Boris Buliga's excellent [[https://d12frosted.io/posts/2020-
 ;  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 #+end_src
 
+** Misc. Config
+
+*** ox-extra
+
+
+#+begin_src emacs-lisp
+(after! org
+  (use-package! ox-extra
+    :config
+    (ox-extras-activate '(latex-header-blocks ignore-headlines))))
+#+end_src
+
+*** Org-mode latex
+
+#+begin_src emacs-lisp
+(after! org
+  ;; Import ox-latex to get org-latex-classes and other funcitonality
+  ;; for exporting to LaTeX from org
+  (use-package! ox-latex
+    :init
+    ;; code here will run immediately
+    :config
+    ;; code here will run after the package is loaded
+    (setq org-latex-pdf-process
+          '("pdflatex -interaction nonstopmode -output-directory %o %f"
+            "bibtex %b"
+            "pdflatex -interaction nonstopmode -output-directory %o %f"
+            "pdflatex -interaction nonstopmode -output-directory %o %f"))
+    (setq org-latex-with-hyperref nil) ;; stop org adding hypersetup{author..} to latex export
+    ;; (setq org-latex-prefer-user-labels t)
+
+    ;; deleted unwanted file extensions after latexMK
+    (setq org-latex-logfiles-extensions
+          (quote ("lof" "lot" "tex~" "aux" "idx" "log" "out" "toc" "nav" "snm" "vrb" "dvi" "fdb_latexmk" "blg" "brf" "fls" "entoc" "ps" "spl" "bbl" "xmpi" "run.xml" "bcf" "acn" "acr" "alg" "glg" "gls" "ist" "xmpi")))
+
+    (unless (boundp 'org-latex-classes)
+      (setq org-latex-classes nil))))
+#+end_src
+
 * Coding
 
 Tangle-on-save has revolutionized my literate programming workflow. It automatically runs =org-babel-tangle= upon saving any org-mode buffer, which means the resulting files will be automatically kept up to date. For a while I did this by manually adding =org-babel-tangle= to the =after-save= hook in Org mode, but now I use the [[https://github.com/yilkalargaw/org-auto-tangle][org-auto-tangle]] package, which does this asynchronously and selectively for each Org file where it is desired.
@@ -848,6 +900,12 @@ Tangle-on-save has revolutionized my literate programming workflow. It automatic
   :hook (org-mode . org-auto-tangle-mode)
   :config
   (setq org-auto-tangle-default t))
+#+end_src
+
+** LSP
+
+#+begin_src emacs-lisp
+(setq lsp-warn-no-matched-clients nil)
 #+end_src
 
 * Other tools
