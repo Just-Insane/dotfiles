@@ -152,31 +152,41 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 #+begin_src shell
 plugins=(
-  git
   aliases
-  colored-man-pages
-  colorize
+  autojump
+  brew
   command-not-found
+  common-aliases
   copyfile
   cp
   dircycle
+  dotenv
+  emacs
+  encode64
+  extract
+  git
+  git-auto-fetch
+  github
+  gitignore
   gpg-agent
   history
+  iterm2
+  kubectl
+  macos
+  postgres
+  pyenv
+  python
+  rbw
+  repo
   rsync
   safe-paste
   ssh-agent
+  thefuck
   tmux
-  rbw
-  autojump
-  github
-  gitignore
-  postgres
-  repo
-  python
-  pyenv
-  dnf
+  web-search
+  zsh-interactive-cd
 )
-#+end_src
+#+End_src
 
 ** P10K source
 
@@ -312,4 +322,10 @@ command -v flux >/dev/null && . <(flux completion zsh)
 #+begin_src shell
 # kubectl completions
 source <(kubectl completion zsh)
+#+end_src
+
+*** fzf completions
+
+#+begin_src shell
+$(brew --prefix)/opt/fzf/install
 #+end_src
