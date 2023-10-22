@@ -166,7 +166,7 @@ export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
 alias ec="emacsclient -c -a emacs -n"
 alias emacs="emacsclient -c -a emacs -n"
 
-alias config='/usr/bin/git --git-dir=/home/jax/.cfg/ --work-tree=/home/jax'
+alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
 # https://github.com/drduh/YubiKey-Guide#replace-agents
 export GPG_TTY="$(tty)"
@@ -176,8 +176,6 @@ gpgconf --launch gpg-agent
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
-
-eval "$(pyenv virtualenv-init -)"
 
 eval $(thefuck --alias fuck)
 
@@ -198,7 +196,7 @@ export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
 eval "$(direnv hook zsh)"
 
 # Created by `pipx` on 2023-10-15 02:36:24
-export PATH="$PATH:/Users/jax/.local/bin"
+export PATH="$PATH:$HOME/.local/bin"
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
