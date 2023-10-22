@@ -15,7 +15,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-#ZSH_THEME="robbyrussell" # Commented_Out
+# ZSH_THEME="robbyrussell"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -79,8 +79,6 @@ COMPLETION_WAITING_DOTS="true"
 # Add wisely, as too many plugins slow down shell startup.
 #plugins=(git) # Commented_Out
 
-source $ZSH/oh-my-zsh.sh
-
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -108,6 +106,7 @@ export LANG=en_US.UTF-8
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 ZSH_THEME="powerlevel10k/powerlevel10k"
+source $ZSH/oh-my-zsh.sh
 
 plugins=(
   aliases
@@ -145,9 +144,6 @@ plugins=(
   zsh-interactive-cd
 )
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
 # Emacs paths
 export PATH="~/.emacs.d/bin:$PATH"
 export PATH="/usr/texbin:$PATH"
@@ -169,7 +165,7 @@ export NVM_DIR="$HOME/.nvm"
     [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
     [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 
-export ALTERNATE_EDITOR=""
+# export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
 
@@ -217,4 +213,8 @@ command -v flux >/dev/null && . <(flux completion zsh)
 # kubectl completions
 source <(kubectl completion zsh)
 
-$(brew --prefix)/opt/fzf/install
+# fzf completions
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
