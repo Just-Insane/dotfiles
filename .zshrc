@@ -115,6 +115,13 @@ export PATH="~/.emacs.d/bin:$PATH"
 export PATH="/usr/texbin:$PATH"
 export PATH="$HOME/.emacs.d/bin:$PATH"
 export PATH="$HOME/.config/emacs/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export GOPATH=$HOME/go
+export GOROOT="$(brew --prefix golang)/libexec"
+export PATH="$PATH:${GOPATH}/bin:${GOROOT}/bin"
+export NVM_DIR="$HOME/.nvm"
+    [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
+    [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
 
@@ -142,3 +149,16 @@ vterm_printf() {
 }
 
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+eval "$(direnv hook zsh)"
+
+# Created by `pipx` on 2023-10-15 02:36:24
+export PATH="$PATH:/Users/jax/.local/bin"
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+# flux completions
+command -v flux >/dev/null && . <(flux completion zsh)
+
+# kubectl completions
+source <(kubectl completion zsh)
