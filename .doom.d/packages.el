@@ -63,7 +63,14 @@
 (unpin! org-roam)
 (package! org-roam-ui)
 
+(package! ob-powershell)
+
+;; (package! d2-mode)
+(package! ob-d2)
+
 (package! org-auto-tangle)
+
+(package! yasnippet-snippets)
 
 (package! dockerfile-mode)
 

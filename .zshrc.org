@@ -2,7 +2,7 @@
 # Tangle by default to .zshrc, which is the default *rc file for ZSH
 #+property: header-args:shell :tangle .zshrc
 #+property: header-args: :mkdirp yes :comments no
-#+startup: fold
+# #+startup: fold
 :END:
 
 #+title: zsh literate config
@@ -138,15 +138,6 @@ export LANG=en_US.UTF-8
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 #+end_src
 
-** ZSH Theme
-
-I will be using the Powerlevel10K Theme.
-
-#+begin_src shell
-ZSH_THEME="powerlevel10k/powerlevel10k"
-source $ZSH/oh-my-zsh.sh
-#+end_src
-
 ** Plugins
 
 #+begin_src shell
@@ -187,13 +178,22 @@ plugins=(
 )
 #+End_src
 
+** ZSH Theme
+
+I will be using the Powerlevel10K Theme.
+
+#+begin_src shell
+ZSH_THEME="powerlevel10k/powerlevel10k"
+source $ZSH/oh-my-zsh.sh
+#+end_src
+
 * User Config
 
 ** PATH Updates
 
 #+begin_src shell
 # Emacs paths
-export PATH="~/.emacs.d/bin:$PATH"
+export PATH="$HOME/.emacs.d/bin:$PATH"
 export PATH="/usr/texbin:$PATH"
 export PATH="$HOME/.config/emacs/bin:$PATH"
 
@@ -222,9 +222,11 @@ This is for getting emacs and emacsclient working, including aliases.
 # export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
+export ALTERNATE_EDITOR=""
 
-alias ec="emacsclient -c -a emacs -n"
-alias emacs="emacsclient -c -a emacs -n"
+#alias ec="emacsclient -c -a emacs -n"
+#alias et="emacsclient -c -t emacs -n"
+#alias emacs="emacsclient -c -a emacs -n"
 #+end_src
 
 ** Dotfiles config
@@ -258,6 +260,7 @@ eval "$(pyenv init -)"
 
 #+begin_src shell
 eval $(thefuck --alias fuck)
+alias powershell="pwsh"
 #+end_src
 
 ** vterm config

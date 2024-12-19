@@ -105,9 +105,6 @@ export LANG=en_US.UTF-8
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-ZSH_THEME="powerlevel10k/powerlevel10k"
-source $ZSH/oh-my-zsh.sh
-
 plugins=(
   aliases
   autojump
@@ -144,8 +141,11 @@ plugins=(
   zsh-interactive-cd
 )
 
+ZSH_THEME="powerlevel10k/powerlevel10k"
+source $ZSH/oh-my-zsh.sh
+
 # Emacs paths
-export PATH="~/.emacs.d/bin:$PATH"
+export PATH="$HOME/.emacs.d/bin:$PATH"
 export PATH="/usr/texbin:$PATH"
 export PATH="$HOME/.config/emacs/bin:$PATH"
 
@@ -168,9 +168,11 @@ export NVM_DIR="$HOME/.nvm"
 # export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
+export ALTERNATE_EDITOR=""
 
-alias ec="emacsclient -c -a emacs -n"
-alias emacs="emacsclient -c -a emacs -n"
+#alias ec="emacsclient -c -a emacs -n"
+#alias et="emacsclient -c -t emacs -n"
+#alias emacs="emacsclient -c -a emacs -n"
 
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
@@ -184,6 +186,7 @@ command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
 eval $(thefuck --alias fuck)
+alias powershell="pwsh"
 
 vterm_printf() {
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ]); then
