@@ -89,9 +89,9 @@
 (require 'age)
 (age-file-enable)
 
-(setq org-directory "~/Sync/org-roam/")
+(setq org-directory "~/Sync/")
 
-(setq org-agenda-files (directory-files-recursively "~/Sync/org-roam/" "\\.org$"))
+(setq org-agenda-files (directory-files-recursively "~/Sync/" "\\.org$"))
 
 (add-hook! org-mode (electric-indent-local-mode -1))
 
@@ -294,7 +294,7 @@ tasks."
       (org-agenda nil "M"))))
 
 (defvar vulpea-capture-inbox-file
-  (format "inbox-%s.org" (system-name))
+  (format "~/Sync/inbox.org")
   "The path to the inbox file.
 
 It is relative to `org-directory', unless it is absolute.")
@@ -377,8 +377,9 @@ It is relative to `org-directory', unless it is absolute.")
         (org-capture-put-target-region-and-position)
         (widen)))))
 
-(setq org-roam-directory (file-truename "~/Sync/org-roam"))
+(setq org-roam-directory (file-truename "~/Sync"))
 (setq +org-roam-open-buffer-on-find-file t)
+(setq org-roam-database-connector 'sqlite)
 
 (use-package! websocket
     :after org-roam)
@@ -397,6 +398,30 @@ It is relative to `org-directory', unless it is absolute.")
 
 ;(use-package! vulpea
 ;  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
+
+(defun my/org-roam-copy-todo-to-today ()
+  (interactive)
+  (let ((org-refile-keep t) ;; Set this to nil to delete the original!
+        (org-roam-dailies-capture-templates
+          '(("t" "tasks" entry "%?"
+             :if-new (file+head+olp "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n" ("Tasks")))))
+        (org-after-refile-insert-hook #'save-buffer)
+        today-file
+        pos)
+    (save-window-excursion
+      (org-roam-dailies--capture (current-time) t)
+      (setq today-file (buffer-file-name))
+      (setq pos (point)))
+
+    ;; Only refile if the target file is different than the current file
+    (unless (equal (file-truename today-file)
+                   (file-truename (buffer-file-name)))
+      (org-refile nil nil (list "Tasks" today-file nil pos)))))
+
+(add-to-list 'org-after-todo-state-change-hook
+             (lambda ()
+               (when (equal org-state "DONE")
+                 (my/org-roam-copy-todo-to-today))))
 
 (after! org
   (use-package! ox-extra
@@ -425,6 +450,16 @@ It is relative to `org-directory', unless it is absolute.")
 
     (unless (boundp 'org-latex-classes)
       (setq org-latex-classes nil))))
+
+(setq ob-powershell-powershell-command "pwsh")
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ (quote (
+         ;; ...
+         (powershell . t)
+         (d2 . t))))
+
+(setq d2-location "/opt/homebrew/bin/d2")
 
 (use-package! org-auto-tangle
   :defer t

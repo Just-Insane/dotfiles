@@ -2,7 +2,7 @@
 # Tangle by default to config.el, which is the most common case
 #+property: header-args:emacs-lisp :tangle config.el
 #+property: header-args :mkdirp yes :comments no
-#+startup: fold
+# #+startup: fold
 :END:
 
 #+title: Doom Emacs Configuration
@@ -286,7 +286,7 @@ This code is written to the =init.el= to select which modules to load. Written h
        ;;rgb               ; creating color strings
        ;;taskrunner        ; taskrunner for all your projects
        terraform         ; infrastructure as code
-       ;;tmux              ; an API for interacting with tmux
+       tmux              ; an API for interacting with tmux
        tree-sitter       ; syntax and parsing, sitting in a tree...
        upload            ; map local to remote projects via ssh/ftp
 
@@ -456,13 +456,13 @@ Add age decryption/encryption support:
 Set the org directory.
 
 #+begin_src emacs-lisp
-(setq org-directory "~/Sync/org-roam/")
+(setq org-directory "~/Sync/")
 #+end_src
 
 Search for org-agenda files recursively within the org-directory. From [[https://www.reddit.com/r/orgmode/comments/zwiwn4/org_agenda_multiple_recursive_source_directories/][Reddit]].
 
 #+begin_src emacs-lisp
-(setq org-agenda-files (directory-files-recursively "~/Sync/org-roam/" "\\.org$"))
+(setq org-agenda-files (directory-files-recursively "~/Sync/" "\\.org$"))
 #+end_src
 
 Disable [[https://code.orgmode.org/bzg/org-mode/src/master/etc/ORG-NEWS#L323][electric-mode]], which is now respected by Org and which creates some confusing indentation sometimes.
@@ -719,7 +719,7 @@ tasks."
 
 #+begin_src emacs-lisp
 (defvar vulpea-capture-inbox-file
-  (format "inbox-%s.org" (system-name))
+  (format "~/Sync/inbox.org")
   "The path to the inbox file.
 
 It is relative to `org-directory', unless it is absolute.")
@@ -808,8 +808,9 @@ It is relative to `org-directory', unless it is absolute.")
 Enable Org-Roam and set it's directory.
 
 #+begin_src emacs-lisp
-(setq org-roam-directory (file-truename "~/Sync/org-roam"))
+(setq org-roam-directory (file-truename "~/Sync"))
 (setq +org-roam-open-buffer-on-find-file t)
+(setq org-roam-database-connector 'sqlite)
 #+end_src
 
 *** Org-Roam-UI
@@ -847,10 +848,37 @@ After coming across Boris Buliga's excellent [[https://d12frosted.io/posts/2020-
 ;  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 #+end_src
 
+*** Automatically store done tasks
+
+#+begin_src emacs-lisp
+(defun my/org-roam-copy-todo-to-today ()
+  (interactive)
+  (let ((org-refile-keep t) ;; Set this to nil to delete the original!
+        (org-roam-dailies-capture-templates
+          '(("t" "tasks" entry "%?"
+             :if-new (file+head+olp "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n" ("Tasks")))))
+        (org-after-refile-insert-hook #'save-buffer)
+        today-file
+        pos)
+    (save-window-excursion
+      (org-roam-dailies--capture (current-time) t)
+      (setq today-file (buffer-file-name))
+      (setq pos (point)))
+
+    ;; Only refile if the target file is different than the current file
+    (unless (equal (file-truename today-file)
+                   (file-truename (buffer-file-name)))
+      (org-refile nil nil (list "Tasks" today-file nil pos)))))
+
+(add-to-list 'org-after-todo-state-change-hook
+             (lambda ()
+               (when (equal org-state "DONE")
+                 (my/org-roam-copy-todo-to-today))))
+#+end_src
+
 ** Misc. Config
 
 *** ox-extra
-
 
 #+begin_src emacs-lisp
 (after! org
@@ -885,7 +913,32 @@ After coming across Boris Buliga's excellent [[https://d12frosted.io/posts/2020-
     (unless (boundp 'org-latex-classes)
       (setq org-latex-classes nil))))
 #+end_src
+*** Org-Babel
+**** PowerShell
+#+begin_src emacs-lisp :tangle packages.el
+(package! ob-powershell)
+#+end_src
 
+#+begin_src emacs-lisp
+(setq ob-powershell-powershell-command "pwsh")
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ (quote (
+         ;; ...
+         (powershell . t)
+         (d2 . t))))
+#+end_src
+
+*** D2-Mode
+# https://github.com/andorsk/d2-mode
+#+begin_src emacs-lisp :tangle packages.el
+;; (package! d2-mode)
+(package! ob-d2)
+#+end_src
+
+#+begin_src emacs-lisp
+(setq d2-location "/opt/homebrew/bin/d2")
+#+end_src
 * Coding
 
 Tangle-on-save has revolutionized my literate programming workflow. It automatically runs =org-babel-tangle= upon saving any org-mode buffer, which means the resulting files will be automatically kept up to date. For a while I did this by manually adding =org-babel-tangle= to the =after-save= hook in Org mode, but now I use the [[https://github.com/yilkalargaw/org-auto-tangle][org-auto-tangle]] package, which does this asynchronously and selectively for each Org file where it is desired.
@@ -909,6 +962,14 @@ Tangle-on-save has revolutionized my literate programming workflow. It automatic
 #+end_src
 
 * Other tools
+
+** Snippets
+
+Load snippets from yasnippet-snippets
+
+#+begin_src emacs-lisp :tangle packages.el
+(package! yasnippet-snippets)
+#+end_src
 
 ** Miscellaneous packages
 
