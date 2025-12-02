@@ -6,8 +6,8 @@
 :END:
 
 #+title: zsh literate config
-#+author: Jax Gauthier
-#+email: jax@gauthier.id
+#+author: Evie Gauthier
+#+email: evie@gauthier.id
 
 This is my `.zshrc` configuration. From this org file, my `.zshrc` file will be generated.
 
