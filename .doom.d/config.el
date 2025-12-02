@@ -57,8 +57,8 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-(setq user-full-name "Jax Gauthier"
-      user-mail-address "jax@gauthier.id")
+(setq user-full-name "Evie Gauthier"
+      user-mail-address "evie@gauthier.id")
 
 (defun unicode-fonts-setup-h (frame)
   "Run unicode-fonts-setup, then remove the hook."

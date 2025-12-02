@@ -6,8 +6,8 @@
 :END:
 
 #+title: Doom Emacs Configuration
-#+author: Jax Gauthier
-#+email: jax@gauthier.id
+#+author: Evie Gauthier
+#+email: evie@gauthier.id
 
 This is my Doom Emacs configuration. From this org file, all the necessary Doom Emacs config files are generated.
 
@@ -382,8 +382,8 @@ This code is written to the =init.el= to select which modules to load. Written h
 My user information.
 
 #+begin_src emacs-lisp
-(setq user-full-name "Jax Gauthier"
-      user-mail-address "jax@gauthier.id")
+(setq user-full-name "Evie Gauthier"
+      user-mail-address "evie@gauthier.id")
 #+end_src
 
 Fix unicode support when running Doom Emacs in daemon mode.
