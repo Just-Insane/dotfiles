@@ -135,7 +135,6 @@ plugins=(
   rsync
   safe-paste
   ssh-agent
-  thefuck
   tmux
   web-search
   zsh-interactive-cd
@@ -170,8 +169,8 @@ export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
 export ALTERNATE_EDITOR=""
 
-#alias ec="emacsclient -c -a emacs -n"
-#alias et="emacsclient -c -t emacs -n"
+alias ec="emacsclient -c -a emacs -n"
+alias et="emacsclient -c -t emacs -n"
 #alias emacs="emacsclient -c -a emacs -n"
 
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
@@ -185,7 +184,7 @@ export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
-eval $(thefuck --alias fuck)
+# eval $(thefuck --alias fuck)
 alias powershell="pwsh"
 
 vterm_printf() {
@@ -221,3 +220,6 @@ source <(kubectl completion zsh)
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
