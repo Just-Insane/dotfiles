@@ -171,7 +171,6 @@ plugins=(
   rsync
   safe-paste
   ssh-agent
-  thefuck
   tmux
   web-search
   zsh-interactive-cd
@@ -224,8 +223,8 @@ export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
 export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
 export ALTERNATE_EDITOR=""
 
-#alias ec="emacsclient -c -a emacs -n"
-#alias et="emacsclient -c -t emacs -n"
+alias ec="emacsclient -c -a emacs -n"
+alias et="emacsclient -c -t emacs -n"
 #alias emacs="emacsclient -c -a emacs -n"
 #+end_src
 
@@ -259,7 +258,7 @@ eval "$(pyenv init -)"
 ** Aliases
 
 #+begin_src shell
-eval $(thefuck --alias fuck)
+# eval $(thefuck --alias fuck)
 alias powershell="pwsh"
 #+end_src
 

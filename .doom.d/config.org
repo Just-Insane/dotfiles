@@ -297,7 +297,7 @@ This code is written to the =init.el= to select which modules to load. Written h
        :lang
        ;;agda              ; types of types of types of types...
        ;;beancount         ; mind the GAAP
-       ;;(cc +lsp)         ; C > C++ == 1
+       (cc +lsp)         ; C > C++ == 1
        ;;clojure           ; java with a lisp
        ;;common-lisp       ; if you've seen one lisp, you've seen them all
        ;;coq               ; proofs-as-programs
@@ -335,7 +335,7 @@ This code is written to the =init.el= to select which modules to load. Written h
        ;;nim               ; python + lisp at the speed of c
        ;;nix               ; I hereby declare "nix geht mehr!"
        ;;ocaml             ; an objective camel
-       (org +contacts +dragndrop +gnuplot +hugo +jupyter +noter +pandoc +pomodoro +pretty +roam2 +present)              ; organize your plain life in plain text
+       (org +contacts +dragndrop +gnuplot +hugo +jupyter +noter +pandoc +pomodoro +pretty +roam +present)              ; organize your plain life in plain text
        ;;php               ; perl's insecure younger brother
        plantuml          ; diagrams for confusing people more
        ;;purescript        ; javascript, but functional
@@ -401,10 +401,41 @@ Fix unicode support when running Doom Emacs in daemon mode.
 (add-hook 'after-make-frame-functions 'unicode-fonts-setup-h nil)
 #+END_SRC
 
-Set the default theme.
+Automatic Light/Dark Theme
+
+#+begin_src emacs-lisp :tangle packages.el
+(package! auto-dark)
+#+end_src
+
 
 #+begin_src emacs-lisp
-(setq doom-theme 'doom-one)
+(setq auto-dark-allow-osascript t)
+(use-package! auto-dark
+  :defer t
+  :init
+  ;; Configure themes
+  (setq! auto-dark-themes '((doom-one) (doom-one-light)))
+  ;; Disable doom's theme loading mechanism (just to make sure)
+  (setq! doom-theme nil)
+  ;; Declare that all themes are safe to load.
+  ;; Be aware that setting this variable may have security implications if you
+  ;; get tricked into loading untrusted themes (via auto-dark-mode or manually).
+  ;; See the documentation of custom-safe-themes for details.
+  (setq! custom-safe-themes t)
+  ;; Enable auto-dark-mode at the right point in time.
+  ;; This is inspired by doom-ui.el. Using server-after-make-frame-hook avoids
+  ;; issues with an early start of the emacs daemon using systemd, which causes
+  ;; problems with the DBus connection that auto-dark mode relies upon.
+  (defun my-auto-dark-init-h ()
+    (auto-dark-mode)
+    (remove-hook 'server-after-make-frame-hook #'my-auto-dark-init-h)
+    (remove-hook 'after-init-hook #'my-auto-dark-init-h))
+  (let ((hook (if (daemonp)
+                  'server-after-make-frame-hook
+                'after-init-hook)))
+    ;; Depth -95 puts this before doom-init-theme-h, which sounds like a good
+    ;; idea, if only for performance reasons.
+    (add-hook hook #'my-auto-dark-init-h -95)))
 #+end_src
 
 Enable line numbers.
@@ -469,6 +500,13 @@ Disable [[https://code.orgmode.org/bzg/org-mode/src/master/etc/ORG-NEWS#L323][el
 
 #+begin_src emacs-lisp
 (add-hook! org-mode (electric-indent-local-mode -1))
+#+end_src
+
+Set sane defaults for org-modern.
+
+#+begin_src emacs-lisp
+(after! org-modern
+  (setq org-modern-star 'replace))
 #+end_src
 
 ** Vulpea

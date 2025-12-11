@@ -71,7 +71,33 @@
 
 (add-hook 'after-make-frame-functions 'unicode-fonts-setup-h nil)
 
-(setq doom-theme 'doom-one)
+(setq auto-dark-allow-osascript t)
+(use-package! auto-dark
+  :defer t
+  :init
+  ;; Configure themes
+  (setq! auto-dark-themes '((doom-one) (doom-one-light)))
+  ;; Disable doom's theme loading mechanism (just to make sure)
+  (setq! doom-theme nil)
+  ;; Declare that all themes are safe to load.
+  ;; Be aware that setting this variable may have security implications if you
+  ;; get tricked into loading untrusted themes (via auto-dark-mode or manually).
+  ;; See the documentation of custom-safe-themes for details.
+  (setq! custom-safe-themes t)
+  ;; Enable auto-dark-mode at the right point in time.
+  ;; This is inspired by doom-ui.el. Using server-after-make-frame-hook avoids
+  ;; issues with an early start of the emacs daemon using systemd, which causes
+  ;; problems with the DBus connection that auto-dark mode relies upon.
+  (defun my-auto-dark-init-h ()
+    (auto-dark-mode)
+    (remove-hook 'server-after-make-frame-hook #'my-auto-dark-init-h)
+    (remove-hook 'after-init-hook #'my-auto-dark-init-h))
+  (let ((hook (if (daemonp)
+                  'server-after-make-frame-hook
+                'after-init-hook)))
+    ;; Depth -95 puts this before doom-init-theme-h, which sounds like a good
+    ;; idea, if only for performance reasons.
+    (add-hook hook #'my-auto-dark-init-h -95)))
 
 (setq display-line-numbers-type t)
 
@@ -94,6 +120,9 @@
 (setq org-agenda-files (directory-files-recursively "~/Sync/" "\\.org$"))
 
 (add-hook! org-mode (electric-indent-local-mode -1))
+
+(after! org-modern
+  (setq org-modern-star 'replace))
 
 (require 'vulpea)
 (use-package! vulpea
