@@ -57,10 +57,13 @@
 
 (package! age)
 
-(package! vulpea
-  :recipe (:host github :repo "d12frosted/vulpea" :files ("vulpea.el" "vulpea-buffer.el" "vulpea-db.el" "vulpea-meta.el" "vulpea-note.el" "vulpea-select.el" "vulpea-utils.el")))
+(package! dired-preview)
+
+(package! vulpea)
 
 (package! org-super-agenda)
+
+(package! org-ql)
 
 (unpin! org-roam)
 (package! org-roam-ui)
@@ -72,7 +75,17 @@
 
 (package! org-auto-tangle)
 
+(package! eat)
+
+(package! magit-delta)
+
 (package! yasnippet-snippets)
+
+(package! copilot-chat
+  :recipe (:host github :repo "chep/copilot-chat.el" :files ("*.el")))
+
+(package! mcp
+  :recipe (:host github :repo "lizqwerscott/mcp.el"))
 
 (package! dockerfile-mode)
 

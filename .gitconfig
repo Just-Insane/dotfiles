@@ -1,0 +1,38 @@
+[init]
+	defaultBranch = main
+[user]
+	name = Evie Gauthier
+	email = evie@gauthier.id
+	signingkey = FDAE4752DD939E6E
+[github]
+	user = Just-Insane
+[core]
+	excludesfile = /Users/evie/.gitignore_global
+	pager = delta
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	side-by-side = true
+	light = false
+	line-numbers = true
+[merge]
+	conflictstyle = zdiff3
+[rebase]
+	autosquash = true
+[push]
+	autoSetupRemote = true
+[fetch]
+	prune = true
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
+[gpg]
+	program = /opt/homebrew/bin/gpg
