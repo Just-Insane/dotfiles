@@ -1,9 +1,15 @@
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+# Skip instant prompt in VS Code — it buffers shell startup output, causing
+# Copilot agent terminals to read stale buffered output instead of command output.
+if [[ "$TERM_PROGRAM" != "vscode" ]] && [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
+
+# Deduplicate PATH entries automatically - zsh ties the `path` array to $PATH,
+# so this silently drops duplicates whenever PATH is modified.
+typeset -U path PATH
 
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
@@ -59,7 +65,7 @@ COMPLETION_WAITING_DOTS="true"
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
 # much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
@@ -105,9 +111,32 @@ export LANG=en_US.UTF-8
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
+HISTSIZE=100000
+SAVEHIST=100000
+setopt HIST_IGNORE_ALL_DUPS   # don't record duplicate consecutive entries
+setopt HIST_REDUCE_BLANKS     # remove extra blanks from history entries
+setopt SHARE_HISTORY          # share history immediately between sessions
+setopt HIST_VERIFY            # show history expansion (!! etc) before executing
+
+# Auto-install custom OMZ plugins if missing (one-time git clone per machine)
+_zsh_custom=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
+[[ -d "$_zsh_custom/plugins/zsh-autosuggestions" ]] || \
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
+        "$_zsh_custom/plugins/zsh-autosuggestions" 2>/dev/null
+[[ -d "$_zsh_custom/plugins/fast-syntax-highlighting" ]] || \
+    git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-highlighting \
+        "$_zsh_custom/plugins/fast-syntax-highlighting" 2>/dev/null
+[[ -d "$_zsh_custom/plugins/you-should-use" ]] || \
+    git clone --depth=1 https://github.com/MichaelAquilina/zsh-you-should-use.git \
+        "$_zsh_custom/plugins/you-should-use" 2>/dev/null
+unset _zsh_custom
+
+# Prevent tmux plugin from auto-starting a new tmux session (already inside tmux)
+ZSH_TMUX_AUTOSTART=false
+ZSH_TMUX_AUTOCONNECT=false
+
 plugins=(
   aliases
-  autojump
   brew
   command-not-found
   common-aliases
@@ -122,9 +151,7 @@ plugins=(
   git-auto-fetch
   github
   gitignore
-  gpg-agent
   history
-  iterm2
   kubectl
   macos
   postgres
@@ -134,17 +161,29 @@ plugins=(
   repo
   rsync
   safe-paste
-  ssh-agent
   tmux
   web-search
+  zsh-autosuggestions
   zsh-interactive-cd
+  you-should-use
+  fast-syntax-highlighting
+  history-substring-search  # must come after fast-syntax-highlighting
 )
+# Load iTerm2 shell integration only when actually running in iTerm2
+[[ "$TERM_PROGRAM" == "iTerm.app" ]] && plugins+=(iterm2)
+
+# Cache zsh completions to disk - avoids recomputing on every shell start
+zstyle ':completion::complete:*' use-cache on
+zstyle ':completion::complete:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/completion-cache"
 
 ZSH_THEME="powerlevel10k/powerlevel10k"
 source $ZSH/oh-my-zsh.sh
 
+# history-substring-search: type a prefix then press Up/Down to cycle matching history
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+
 # Emacs paths
-export PATH="$HOME/.emacs.d/bin:$PATH"
 export PATH="/usr/texbin:$PATH"
 export PATH="$HOME/.config/emacs/bin:$PATH"
 
@@ -154,23 +193,31 @@ then
     PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 fi
 
-# GO paths
+# GO paths - hardcoded to avoid brew --prefix subprocess on every shell start
 export GOPATH=$HOME/go
-export GOROOT="$(brew --prefix golang)/libexec"
+export GOROOT="/opt/homebrew/opt/go/libexec"
 export PATH="$PATH:${GOPATH}/bin:${GOROOT}/bin"
 
-# NVM paths
+# NVM paths - lazy load for faster shell startup (~500ms saved per terminal)
 export NVM_DIR="$HOME/.nvm"
-    [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
+_load_nvm() {
+    unset -f nvm node npm npx pnpm
+    [ -s "$(brew --prefix nvm)/nvm.sh" ] && \. "$(brew --prefix nvm)/nvm.sh"
     [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+}
+nvm()  { _load_nvm; nvm  "$@"; }
+node() { _load_nvm; node "$@"; }
+npm()  { _load_nvm; npm  "$@"; }
+npx()  { _load_nvm; npx  "$@"; }
+pnpm() { _load_nvm; pnpm "$@"; }
 
 # export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
-export VISUAL="emacsclient -c -a emacs -n"  # $VISUAL opens in GUI mode
+export VISUAL="emacsclient -c -a emacs"  # $VISUAL opens in GUI mode
 export ALTERNATE_EDITOR=""
 
 alias ec="emacsclient -c -a emacs -n"
-alias et="emacsclient -c -t emacs -n"
+alias et="emacsclient -t"
 #alias emacs="emacsclient -c -a emacs -n"
 
 alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
@@ -178,14 +225,117 @@ alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 # https://github.com/drduh/YubiKey-Guide#replace-agents
 export GPG_TTY="$(tty)"
 export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-gpgconf --launch gpg-agent
+if [[ "$TERM_PROGRAM" != "vscode" ]]; then
+    gpgconf --launch gpg-agent
+fi
 
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+# Cache pyenv init output - regenerate only when the pyenv binary changes
+_pyenv_init_cache="${XDG_CACHE_HOME:-$HOME/.cache}/pyenv-init.zsh"
+if command -v pyenv >/dev/null; then
+    if [[ ! -f "$_pyenv_init_cache" ]] || [[ "$(command -v pyenv)" -nt "$_pyenv_init_cache" ]]; then
+        pyenv init --no-rehash - zsh > "$_pyenv_init_cache" 2>/dev/null
+    fi
+    source "$_pyenv_init_cache"
+fi
+unset _pyenv_init_cache
 
 # eval $(thefuck --alias fuck)
 alias powershell="pwsh"
+alias lg="lazygit"
+
+# gh: GitHub CLI shortcuts
+alias prl="gh pr list"
+alias prv="gh pr view --web"
+alias prc="gh pr create"
+alias ghr="gh repo view --web"
+
+# mkcd: create a directory and cd into it
+mkcd() { mkdir -p "$@" && cd "$_"; }
+
+# k9s: Kubernetes TUI (brew install k9s)
+if command -v k9s >/dev/null; then
+    alias k='k9s'
+fi
+
+# tealdeer: practical command examples (brew install tealdeer)
+if command -v tldr >/dev/null; then
+    alias help='tldr'
+fi
+
+# xh: modern HTTP client — cleaner syntax than curl (brew install xh)
+# Usage: xh POST api.example.com/endpoint key=value
+# Wire xh to use https by default for bare hostnames
+export XH_HTTPS=true
+
+# git worktree shortcuts — check out two branches simultaneously
+alias gwl='git worktree list'
+alias gwa='git worktree add'
+alias gwr='git worktree remove'
+
+# bat: cat with syntax highlighting (brew install bat)
+# Disabled in VS Code - bat's ANSI/decoration output breaks Copilot agent terminal reads
+if [[ "$TERM_PROGRAM" != "vscode" ]] && command -v bat >/dev/null; then
+    alias cat='bat --style=plain --pager=never'
+    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+    export BAT_THEME="Solarized (dark)"
+fi
+
+# eza: modern ls with icons (brew install eza)
+# Disabled in VS Code - icons require Nerd Font; may not render in all VS Code terminals
+if [[ "$TERM_PROGRAM" != "vscode" ]] && command -v eza >/dev/null; then
+    alias ls='eza'
+    alias ll='eza -la --icons --git --group-directories-first --time-style=long-iso'
+    alias la='eza -la --icons --git --group-directories-first --time-style=long-iso'
+    alias lt='eza --tree --icons --git-ignore'
+fi
+
+# dust: visual disk usage tree (brew install dust)
+# --reverse: show largest at bottom so biggest offenders are visible without scrolling
+if command -v dust >/dev/null; then
+    alias du='dust --reverse'
+fi
+
+# cp → rsync: archive mode preserves permissions/timestamps/symlinks; shows progress
+# Use \cp or command cp to bypass when you need plain cp behaviour
+alias cp='rsync -ah --progress'
+
+# rg: ripgrep replaces grep - faster, respects .gitignore, Unicode-aware
+# --smart-case: case-insensitive unless the pattern contains uppercase
+if command -v rg >/dev/null; then
+    alias grep='rg --smart-case'
+fi
+
+# xh: modern curl replacement - cleaner syntax, auto-detects JSON
+# --follow: follow redirects (off by default in curl); --timeout: fail fast
+if command -v xh >/dev/null; then
+    alias curl='xh --follow --timeout=30'
+fi
+
+# btop: modern top with graphs and mouse support
+if command -v btop >/dev/null; then
+    alias top='btop'
+fi
+
+# delta: syntax-highlighted diff (also used as git pager)
+# Note: delta reads unified diff format from stdin or takes two files directly
+if command -v delta >/dev/null; then
+    alias diff='delta'
+fi
+
+# fd: fast find replacement - respects .gitignore, simpler syntax
+# ⚠ syntax differs: `fd pattern` vs `find . -name pattern`; use \find to bypass
+if command -v fd >/dev/null; then
+    alias find='fd'
+fi
+
+# duf: disk usage by filesystem (replaces df)
+# OMZ common-aliases sets duf='du -sh *' which would intercept — unalias it first
+if command -v duf >/dev/null; then
+    unalias duf 2>/dev/null
+    alias df='duf'
+fi
 
 vterm_printf() {
     if [ -n "$TMUX" ] && ([ "${TERM%%-*}" = "tmux" ] || [ "${TERM%%-*}" = "screen" ]); then
@@ -201,25 +351,68 @@ vterm_printf() {
 
 export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
 
-eval "$(direnv hook zsh)"
+# Cache direnv hook output - regenerate only when the direnv binary changes
+_direnv_cache="${XDG_CACHE_HOME:-$HOME/.cache}/direnv-hook.zsh"
+if command -v direnv >/dev/null; then
+    if [[ ! -f "$_direnv_cache" ]] || [[ "$(command -v direnv)" -nt "$_direnv_cache" ]]; then
+        direnv hook zsh > "$_direnv_cache" 2>/dev/null
+    fi
+    source "$_direnv_cache"
+fi
+unset _direnv_cache
 
 # Created by `pipx` on 2023-10-15 02:36:24
 export PATH="$PATH:$HOME/.local/bin"
-export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
 
-# flux completions
-command -v flux >/dev/null && . <(flux completion zsh)
+# flux completions - cached to avoid regenerating on every shell start
+_flux_completion_cache="${XDG_CACHE_HOME:-$HOME/.cache}/flux-completion.zsh"
+if command -v flux >/dev/null; then
+    if [[ ! -f "$_flux_completion_cache" ]] || [[ -n "$(find "$_flux_completion_cache" -mtime +7 2>/dev/null)" ]]; then
+        flux completion zsh > "$_flux_completion_cache" 2>/dev/null
+    fi
+    [[ -f "$_flux_completion_cache" ]] && source "$_flux_completion_cache"
+fi
+unset _flux_completion_cache
 
-# kubectl completions
-source <(kubectl completion zsh)
+# kubectl completions - cached to avoid regenerating on every shell start
+_kubectl_completion_cache="${XDG_CACHE_HOME:-$HOME/.cache}/kubectl-completion.zsh"
+if command -v kubectl >/dev/null; then
+    if [[ ! -f "$_kubectl_completion_cache" ]] || [[ -n "$(find "$_kubectl_completion_cache" -mtime +7 2>/dev/null)" ]]; then
+        kubectl completion zsh > "$_kubectl_completion_cache" 2>/dev/null
+    fi
+    [[ -f "$_kubectl_completion_cache" ]] && source "$_kubectl_completion_cache"
+fi
+unset _kubectl_completion_cache
+
+# Cache zoxide init output - regenerate only when the zoxide binary changes
+_zoxide_cache="${XDG_CACHE_HOME:-$HOME/.cache}/zoxide-init.zsh"
+if command -v zoxide >/dev/null; then
+    if [[ ! -f "$_zoxide_cache" ]] || [[ "$(command -v zoxide)" -nt "$_zoxide_cache" ]]; then
+        zoxide init zsh --cmd cd > "$_zoxide_cache" 2>/dev/null
+    fi
+    source "$_zoxide_cache"
+fi
+unset _zoxide_cache
+
+# atuin - history on steroids (brew install atuin)
+# Replaces Ctrl+R with fuzzy search, timestamps, per-directory/host filtering
+_atuin_cache="${XDG_CACHE_HOME:-$HOME/.cache}/atuin-init.zsh"
+if command -v atuin >/dev/null; then
+    if [[ ! -f "$_atuin_cache" ]] || [[ "$(command -v atuin)" -nt "$_atuin_cache" ]]; then
+        atuin init zsh > "$_atuin_cache" 2>/dev/null
+    fi
+    source "$_atuin_cache"
+fi
+unset _atuin_cache
 
 # fzf completions
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+# Wire fzf to use fd - faster, respects .gitignore, finds hidden files
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
