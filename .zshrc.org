@@ -75,9 +75,13 @@ export ZSH="$HOME/.oh-my-zsh"
 HYPHEN_INSENSITIVE="true"
 
 # Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+# Disable OMZ auto-update in VS Code terminals — the update check does a git
+# fetch over SSH which can hang in restricted agent environments.
+if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+    zstyle ':omz:update' mode disabled
+else
+    zstyle ':omz:update' mode auto      # update automatically without asking
+fi
 
 # Uncomment the following line to change how often to auto-update (in days).
 zstyle ':omz:update' frequency 13
@@ -92,7 +96,9 @@ zstyle ':omz:update' frequency 13
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
-ENABLE_CORRECTION="true"
+# Disabled in VS Code — ZSH correction prompts "correct x to y? [nyae]" which
+# hangs agent terminals waiting for user input.
+[[ "$TERM_PROGRAM" != "vscode" ]] && ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # You can also set it to another string to have that shown instead of the default red dots.
@@ -174,6 +180,13 @@ Note: ~ssh-agent~ and ~gpg-agent~ OMZ plugins are intentionally excluded — the
 during load which garbles the P10K instant prompt buffer in tmux. GPG/SSH are handled via the
 manual ~gpgconf~ block in the GPG Config section below.
 
+In VS Code terminals (and Copilot agent sub-shells), a minimal plugin set is used to avoid
+network/daemon hangs: ~git-auto-fetch~ (SSH fetch on every prompt), ~github~ (API calls),
+~rbw~ (Bitwarden daemon), ~dotenv~ (arbitrary ~.env~ sourcing), ~emacs~ (daemon socket),
+and ~repo~ (network) are all excluded. ~pyenv~ is also excluded — pyenv init is handled
+via the cached ~pyenv-init.zsh~ block, and the OMZ plugin triggers ~pyenv rehash~ which
+acquires a file lock that can stall shell startup for 60 seconds.
+
 #+begin_src shell
 # Auto-install custom OMZ plugins if missing (one-time git clone per machine)
 _zsh_custom=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
@@ -194,43 +207,59 @@ unset _zsh_custom
 ZSH_TMUX_AUTOSTART=false
 ZSH_TMUX_AUTOCONNECT=false
 
-plugins=(
-  aliases
-  brew
-  command-not-found
-  common-aliases
-  copyfile
-  cp
-  dircycle
-  dotenv
-  emacs
-  encode64
-  extract
-  git
-  git-auto-fetch
-  github
-  gitignore
-  history
-  kubectl
-  macos
-  postgres
-  pyenv
-  python
-  rbw
-  repo
-  rsync
-  safe-paste
-  tmux
-  web-search
-  zsh-autosuggestions
-  zsh-interactive-cd
-  you-should-use
-  fast-syntax-highlighting
-  history-substring-search  # must come after fast-syntax-highlighting
-)
-# Load iTerm2 shell integration only when actually running in iTerm2
-[[ "$TERM_PROGRAM" == "iTerm.app" ]] && plugins+=(iterm2)
-#+End_src
+# In VS Code: use a minimal plugin set to avoid network/daemon hangs during init.
+# Excluded: git-auto-fetch (SSH fetch), github (API calls), rbw (Bitwarden server),
+#           dotenv (arbitrary .env sourcing), emacs (daemon socket), repo (network).
+# GIT_AUTO_FETCH_INTERVAL=0 is set globally so agent/sub-shells also skip SSH fetch.
+GIT_AUTO_FETCH_INTERVAL=0
+if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+    plugins=(
+      common-aliases
+      git
+      gitignore
+      history
+      safe-paste
+      zsh-autosuggestions
+      fast-syntax-highlighting
+      history-substring-search
+    )
+else
+    plugins=(
+      aliases
+      brew
+      command-not-found
+      common-aliases
+      copyfile
+      cp
+      dircycle
+      dotenv
+      emacs
+      encode64
+      extract
+      git
+      github
+      gitignore
+      history
+      kubectl
+      macos
+      postgres
+      python
+      rbw
+      repo
+      rsync
+      safe-paste
+      tmux
+      web-search
+      zsh-autosuggestions
+      zsh-interactive-cd
+      you-should-use
+      fast-syntax-highlighting
+      history-substring-search  # must come after fast-syntax-highlighting
+    )
+    # Load iTerm2 shell integration only when actually running in iTerm2
+    [[ "$TERM_PROGRAM" == "iTerm.app" ]] && plugins+=(iterm2)
+fi
+#+end_src
 
 #+RESULTS:
 
@@ -292,6 +321,12 @@ npx()  { _load_nvm; npx  "$@"; }
 pnpm() { _load_nvm; pnpm "$@"; }
 #+end_src
 
+** VSCode
+
+Shell integration is sourced at the very end of this file (after P10K) so that its
+~precmd~/~preexec~ hooks are appended after p10k's and not overwritten by them.
+See [[*VS Code Shell Integration][VS Code Shell Integration]] below.
+
 ** Emacs Editor setup
 
 This is for getting emacs and emacsclient working, including aliases.
@@ -319,15 +354,19 @@ alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
 Config for using GPG and SSH with my Yubikey.
 
-The agent launch is skipped in VS Code terminals — it's not needed for development
-work and adds latency to every new terminal open.
+The agent launch and socket lookup are skipped in VS Code terminals — ~gpgconf~ can
+hang for 60s if the agent is in a bad state. A static socket path is used instead.
 
 #+begin_src shell
 # https://github.com/drduh/YubiKey-Guide#replace-agents
 export GPG_TTY="$(tty)"
-export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
 if [[ "$TERM_PROGRAM" != "vscode" ]]; then
     gpgconf --launch gpg-agent
+    export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+else
+    # In VS Code: gpgconf may hang if the agent is in a bad state.
+    # Use a static well-known socket path instead of querying gpgconf.
+    export SSH_AUTH_SOCK="${GNUPGHOME:-$HOME/.gnupg}/S.gpg-agent.ssh"
 fi
 #+end_src
 
@@ -337,9 +376,21 @@ Init output is cached so pyenv doesn't spawn subprocesses on every pane open.
 ~--no-rehash~ avoids a file-lock race when opening multiple tmux panes simultaneously.
 Run ~pyenv rehash~ manually after installing a new Python version or a pip CLI tool.
 
+The stale-lock cleanup removes ~.pyenv-shim~ on every shell start. This file is pyenv's
+rehash mutex; if a ~pyenv rehash~ process is killed (e.g. by a timed-out terminal), the
+lock is never released. Next startup, any new rehash waits 60 s before giving up — that
+60 s wait is the visible hang. pyenv rehash completes in <5 s, so any surviving lock is
+orthaned and safe to remove.
+
 #+begin_src shell
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+
+# Clean up stale pyenv rehash lock on every shell start.
+# pyenv rehash finishes in <5s; any surviving lock is orphaned (killed process).
+# Removing it here is safe — no pyenv rehash spans across shell starts.
+rm -f "${PYENV_ROOT:-$HOME/.pyenv}/shims/.pyenv-shim" 2>/dev/null
+
 # Cache pyenv init output - regenerate only when the pyenv binary changes
 _pyenv_init_cache="${XDG_CACHE_HOME:-$HOME/.cache}/pyenv-init.zsh"
 if command -v pyenv >/dev/null; then
@@ -416,7 +467,9 @@ alias cp='rsync -ah --progress'
 
 # rg: ripgrep replaces grep - faster, respects .gitignore, Unicode-aware
 # --smart-case: case-insensitive unless the pattern contains uppercase
-if command -v rg >/dev/null; then
+# Disabled in VS Code — rg rejects GNU grep flags (e.g. -E encoding arg), breaking
+# agent/script commands that call grep with standard flags.
+if [[ "$TERM_PROGRAM" != "vscode" ]] && command -v rg >/dev/null; then
     alias grep='rg --smart-case'
 fi
 
@@ -439,7 +492,9 @@ fi
 
 # fd: fast find replacement - respects .gitignore, simpler syntax
 # ⚠ syntax differs: `fd pattern` vs `find . -name pattern`; use \find to bypass
-if command -v fd >/dev/null; then
+# Disabled in VS Code — fd syntax is incompatible with POSIX find flags used by
+# agent/script commands.
+if [[ "$TERM_PROGRAM" != "vscode" ]] && command -v fd >/dev/null; then
     alias find='fd'
 fi
 
@@ -589,4 +644,16 @@ Source P10K Config (Set via P10K during configuration)
 #+begin_src shell
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+#+end_src
+
+** VS Code Shell Integration
+
+Must be sourced *after* P10K. P10K overwrites ~precmd~/~preexec~ hooks during its init; if shell
+integration is sourced before P10K, its OSC 133 hooks are stripped and VS Code never receives the
+"command finished" signal — every agent terminal command appears to hang.
+
+#+begin_src shell
+# VS Code shell integration — must be sourced LAST, after p10k, so its precmd/preexec
+# hooks are appended on top of p10k's and not overwritten by it.
+[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
 #+end_src

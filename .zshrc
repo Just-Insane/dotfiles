@@ -37,9 +37,13 @@ export ZSH="$HOME/.oh-my-zsh"
 HYPHEN_INSENSITIVE="true"
 
 # Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+# Disable OMZ auto-update in VS Code terminals — the update check does a git
+# fetch over SSH which can hang in restricted agent environments.
+if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+    zstyle ':omz:update' mode disabled
+else
+    zstyle ':omz:update' mode auto      # update automatically without asking
+fi
 
 # Uncomment the following line to change how often to auto-update (in days).
 zstyle ':omz:update' frequency 13
@@ -54,7 +58,9 @@ zstyle ':omz:update' frequency 13
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
-ENABLE_CORRECTION="true"
+# Disabled in VS Code — ZSH correction prompts "correct x to y? [nyae]" which
+# hangs agent terminals waiting for user input.
+[[ "$TERM_PROGRAM" != "vscode" ]] && ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # You can also set it to another string to have that shown instead of the default red dots.
@@ -135,42 +141,58 @@ unset _zsh_custom
 ZSH_TMUX_AUTOSTART=false
 ZSH_TMUX_AUTOCONNECT=false
 
-plugins=(
-  aliases
-  brew
-  command-not-found
-  common-aliases
-  copyfile
-  cp
-  dircycle
-  dotenv
-  emacs
-  encode64
-  extract
-  git
-  git-auto-fetch
-  github
-  gitignore
-  history
-  kubectl
-  macos
-  postgres
-  pyenv
-  python
-  rbw
-  repo
-  rsync
-  safe-paste
-  tmux
-  web-search
-  zsh-autosuggestions
-  zsh-interactive-cd
-  you-should-use
-  fast-syntax-highlighting
-  history-substring-search  # must come after fast-syntax-highlighting
-)
-# Load iTerm2 shell integration only when actually running in iTerm2
-[[ "$TERM_PROGRAM" == "iTerm.app" ]] && plugins+=(iterm2)
+# In VS Code: use a minimal plugin set to avoid network/daemon hangs during init.
+# Excluded: git-auto-fetch (SSH fetch), github (API calls), rbw (Bitwarden server),
+#           dotenv (arbitrary .env sourcing), emacs (daemon socket), repo (network).
+# GIT_AUTO_FETCH_INTERVAL=0 is set globally so agent/sub-shells also skip SSH fetch.
+GIT_AUTO_FETCH_INTERVAL=0
+if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+    plugins=(
+      common-aliases
+      git
+      gitignore
+      history
+      safe-paste
+      zsh-autosuggestions
+      fast-syntax-highlighting
+      history-substring-search
+    )
+else
+    plugins=(
+      aliases
+      brew
+      command-not-found
+      common-aliases
+      copyfile
+      cp
+      dircycle
+      dotenv
+      emacs
+      encode64
+      extract
+      git
+      github
+      gitignore
+      history
+      kubectl
+      macos
+      postgres
+      python
+      rbw
+      repo
+      rsync
+      safe-paste
+      tmux
+      web-search
+      zsh-autosuggestions
+      zsh-interactive-cd
+      you-should-use
+      fast-syntax-highlighting
+      history-substring-search  # must come after fast-syntax-highlighting
+    )
+    # Load iTerm2 shell integration only when actually running in iTerm2
+    [[ "$TERM_PROGRAM" == "iTerm.app" ]] && plugins+=(iterm2)
+fi
 
 # Cache zsh completions to disk - avoids recomputing on every shell start
 zstyle ':completion::complete:*' use-cache on
@@ -224,13 +246,23 @@ alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
 # https://github.com/drduh/YubiKey-Guide#replace-agents
 export GPG_TTY="$(tty)"
-export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
 if [[ "$TERM_PROGRAM" != "vscode" ]]; then
     gpgconf --launch gpg-agent
+    export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+else
+    # In VS Code: gpgconf may hang if the agent is in a bad state.
+    # Use a static well-known socket path instead of querying gpgconf.
+    export SSH_AUTH_SOCK="${GNUPGHOME:-$HOME/.gnupg}/S.gpg-agent.ssh"
 fi
 
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+
+# Clean up stale pyenv rehash lock on every shell start.
+# pyenv rehash finishes in <5s; any surviving lock is orphaned (killed process).
+# Removing it here is safe — no pyenv rehash spans across shell starts.
+rm -f "${PYENV_ROOT:-$HOME/.pyenv}/shims/.pyenv-shim" 2>/dev/null
+
 # Cache pyenv init output - regenerate only when the pyenv binary changes
 _pyenv_init_cache="${XDG_CACHE_HOME:-$HOME/.cache}/pyenv-init.zsh"
 if command -v pyenv >/dev/null; then
@@ -303,7 +335,9 @@ alias cp='rsync -ah --progress'
 
 # rg: ripgrep replaces grep - faster, respects .gitignore, Unicode-aware
 # --smart-case: case-insensitive unless the pattern contains uppercase
-if command -v rg >/dev/null; then
+# Disabled in VS Code — rg rejects GNU grep flags (e.g. -E encoding arg), breaking
+# agent/script commands that call grep with standard flags.
+if [[ "$TERM_PROGRAM" != "vscode" ]] && command -v rg >/dev/null; then
     alias grep='rg --smart-case'
 fi
 
@@ -326,7 +360,9 @@ fi
 
 # fd: fast find replacement - respects .gitignore, simpler syntax
 # ⚠ syntax differs: `fd pattern` vs `find . -name pattern`; use \find to bypass
-if command -v fd >/dev/null; then
+# Disabled in VS Code — fd syntax is incompatible with POSIX find flags used by
+# agent/script commands.
+if [[ "$TERM_PROGRAM" != "vscode" ]] && command -v fd >/dev/null; then
     alias find='fd'
 fi
 
@@ -416,3 +452,45 @@ export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# VS Code shell integration — must be sourced LAST, after p10k, so its precmd/preexec
+# hooks are appended on top of p10k's and not overwritten by it.
+[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+
+# --- mssh / mosh auto-connect (added by mosh-setup) ---
+_mssh_get_host() {
+  local skip_next=false
+  for arg in "$@"; do
+    if $skip_next; then skip_next=false; continue; fi
+    case "$arg" in
+      -[bcDEeFiIJlLmopQRSw]) skip_next=true ;;
+      -*) ;;
+      *)  printf '%s' "${arg##*@}"; return ;;
+    esac
+  done
+}
+
+mssh() {
+  # Drop-in ssh wrapper: uses mosh for registered hosts, with optional tmux.
+  local host hosts_file line tmux_session=""
+  host="$(_mssh_get_host "$@")"
+  hosts_file="${MOSH_HOSTS_FILE:-${HOME}/.mosh_hosts}"
+
+  if [[ -n "$host" && -f "$hosts_file" ]]; then
+    line="$(grep -m1 "^${host}" "$hosts_file" 2>/dev/null || true)"
+    if [[ -n "$line" ]]; then
+      tmux_session="$(printf '%s' "$line" | awk '{print $2}')"
+      if [[ -n "$tmux_session" ]]; then
+        echo "[mssh] mosh → ${host} (tmux: ${tmux_session})" >&2
+        mosh "$@" -- tmux new-session -A -s "$tmux_session"
+      else
+        echo "[mssh] mosh → ${host}" >&2
+        mosh "$@"
+      fi
+      return
+    fi
+  fi
+
+  ssh "$@"
+}
+# --- end mssh ---
