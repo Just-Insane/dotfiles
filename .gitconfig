@@ -3,18 +3,13 @@
 [user]
 	name = Evie Gauthier
 	email = evie@gauthier.id
-	signingkey = FDAE4752DD939E6E
+	signingkey = /home/vscode/.ssh/git_signing_key.pub
 [github]
 	user = Just-Insane
 [core]
-	excludesfile = /Users/evie/.gitignore_global
+	excludesfile = ~/.gitignore_global
 	pager = delta
-[difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
-[mergetool "sourcetree"]
-	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
+
 [interactive]
 	diffFilter = delta --color-only
 [delta]
@@ -35,4 +30,7 @@
 [tag]
 	gpgsign = true
 [gpg]
-	program = /opt/homebrew/bin/gpg
+	program = gpg
+	format = ssh
+[gpg "ssh"]
+	allowedSignersFile = /home/vscode/.ssh/allowed_signers

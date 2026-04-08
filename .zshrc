@@ -1,3 +1,8 @@
+# Disable P10k instant prompt unconditionally in Codespaces.
+# $TERM_PROGRAM is not reliably set to "vscode" in browser-based Codespaces
+# (iPad / vscode.dev), so a conditional guard silently fails there.
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -160,7 +165,6 @@ if [[ "$TERM_PROGRAM" == "vscode" ]]; then
 else
     plugins=(
       aliases
-      brew
       command-not-found
       common-aliases
       copyfile
@@ -175,7 +179,6 @@ else
       gitignore
       history
       kubectl
-      macos
       postgres
       python
       rbw
@@ -190,8 +193,6 @@ else
       fast-syntax-highlighting
       history-substring-search  # must come after fast-syntax-highlighting
     )
-    # Load iTerm2 shell integration only when actually running in iTerm2
-    [[ "$TERM_PROGRAM" == "iTerm.app" ]] && plugins+=(iterm2)
 fi
 
 # Cache zsh completions to disk - avoids recomputing on every shell start
@@ -205,8 +206,7 @@ source $ZSH/oh-my-zsh.sh
 bindkey '^[[A' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
 
-# Emacs paths
-export PATH="/usr/texbin:$PATH"
+# Emacs paths (doom emacs — cross-platform; skip macOS MacTeX /usr/texbin)
 export PATH="$HOME/.config/emacs/bin:$PATH"
 
 # User specific environment
@@ -215,23 +215,18 @@ then
     PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 fi
 
-# GO paths - hardcoded to avoid brew --prefix subprocess on every shell start
+# GO paths
 export GOPATH=$HOME/go
-export GOROOT="/opt/homebrew/opt/go/libexec"
-export PATH="$PATH:${GOPATH}/bin:${GOROOT}/bin"
+# GOROOT intentionally omitted — Go locates it automatically on Linux.
+export PATH="$PATH:${GOPATH}/bin"
 
-# NVM paths - lazy load for faster shell startup (~500ms saved per terminal)
-export NVM_DIR="$HOME/.nvm"
-_load_nvm() {
-    unset -f nvm node npm npx pnpm
-    [ -s "$(brew --prefix nvm)/nvm.sh" ] && \. "$(brew --prefix nvm)/nvm.sh"
-    [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
-}
-nvm()  { _load_nvm; nvm  "$@"; }
-node() { _load_nvm; node "$@"; }
-npm()  { _load_nvm; npm  "$@"; }
-npx()  { _load_nvm; npx  "$@"; }
-pnpm() { _load_nvm; pnpm "$@"; }
+# NVM — installed by the devcontainers node feature at /usr/local/share/nvm.
+# Source nvm.sh so `nvm` is available for version switching; --no-use avoids
+# auto-activating a version (the devcontainer already pins the right one).
+# Do NOT wrap node/npm/pnpm in lazy-loaders: corepack owns pnpm on Codespaces
+# and the brew --prefix calls from the macOS lazy-loader don't exist here.
+export NVM_DIR="${NVM_DIR:-/usr/local/share/nvm}"
+[ -s "${NVM_DIR}/nvm.sh" ] && \. "${NVM_DIR}/nvm.sh" --no-use
 
 # export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient -t"           # $EDITOR opens in terminal
