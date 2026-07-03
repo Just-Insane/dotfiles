@@ -439,6 +439,7 @@ set -g @plugin 'sainnhe/tmux-fzf'
 # <prefix>+F — fuzzy-search and switch sessions, windows, panes, commands, processes
 set -g @plugin 'Morantron/tmux-fingers'
 set -g @fingers-key y  # <prefix>+Y — highlight copyable strings (URLs, paths, git hashes)
+set -g @fingers-skip-wizard 1  # binary v2.7.0 vs plugin v2.7.1 — skip update wizard
 
 
 # -- custom variables ----------------------------------------------------------
