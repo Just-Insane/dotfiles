@@ -453,6 +453,66 @@ export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# -- Default tmux session ------------------------------------------------------
+# Auto-create the "Default" session with four general-purpose windows.
+_create_default_tmux_session() {
+  [[ "$TERM_PROGRAM" == "vscode" ]] && return
+  [[ -n "$TMUX" ]] && return
+  command -v tmux >/dev/null 2>&1 || return
+
+  tmux has-session -t Default 2>/dev/null && return
+
+  # 1. General
+  tmux new-session -d -s Default -n General -c "$HOME"
+
+  # 2. Charm
+  tmux new-window -t Default -n Charm -c "$HOME/git/Charm"
+
+  # 3. MDAD
+  tmux new-window -t Default -n MDAD -c "$HOME/git/matrix-docker-ansible-deploy"
+
+  # 4. Matrix (mosh)
+  tmux new-window -t Default -n Matrix -c "$HOME"
+  tmux send-keys -t Default:Matrix 'mssh root@matrix-cloudhub-1.cloudhub.social' Enter
+
+  tmux select-window -t Default:General
+}
+[[ "$TERM_PROGRAM" != "vscode" ]] && _create_default_tmux_session
+
+# -- Claude tmux session -------------------------------------------------------
+# Auto-create the "claude" session with three remote-enabled Claude CLI windows.
+# Runs on every non-vscode shell that starts outside tmux; the has-session guard
+# makes it a no-op once the session exists.
+_create_claude_tmux_session() {
+  # Skip in VS Code terminals and when already inside tmux
+  [[ "$TERM_PROGRAM" == "vscode" ]] && return
+  [[ -n "$TMUX" ]] && return
+  command -v tmux   >/dev/null 2>&1 || return
+  command -v claude >/dev/null 2>&1 || return
+
+  # Nothing to do if the session already exists
+  tmux has-session -t claude 2>/dev/null && return
+
+  # 1. General
+  tmux new-session -d -s claude -n General -c "$HOME"
+  tmux send-keys -t claude:General 'claude --remote-control General' Enter
+
+  # 2. Charm
+  tmux new-window -t claude -n Charm -c "$HOME/git/Charm"
+  tmux send-keys -t claude:Charm 'claude --remote-control Charm' Enter
+
+  # 3. MDAD
+  tmux new-window -t claude -n MDAD -c "$HOME/git/matrix-docker-ansible-deploy"
+  tmux send-keys -t claude:MDAD 'claude --remote-control MDAD' Enter
+
+  # 4. Knowledge-Platform
+  tmux new-window -t claude -n Knowledge-Platform -c "$HOME/git/Knowledge-Platform"
+  tmux send-keys -t claude:Knowledge-Platform 'claude --remote-control Knowledge-Platform' Enter
+
+  tmux select-window -t claude:Charm
+}
+[[ "$TERM_PROGRAM" != "vscode" ]] && _create_claude_tmux_session
+
 # VS Code shell integration — must be sourced LAST, after p10k, so its precmd/preexec
 # hooks are appended on top of p10k's and not overwritten by it.
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
@@ -494,3 +554,11 @@ mssh() {
   ssh "$@"
 }
 # --- end mssh ---
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/evie/.lmstudio/bin"
+# End of LM Studio CLI section
+
+# tmuxinator
+export PATH="$PATH:/opt/homebrew/lib/ruby/gems/4.0.0/bin"
+source /opt/homebrew/lib/ruby/gems/4.0.0/gems/tmuxinator-3.4.0/completion/tmuxinator.zsh

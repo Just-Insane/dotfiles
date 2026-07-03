@@ -646,6 +646,82 @@ Source P10K Config (Set via P10K during configuration)
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 #+end_src
 
+** Default tmux session
+
+Auto-create the ~Default~ session with four general-purpose windows when a new terminal opens outside
+of tmux. The ~has-session~ guard makes it a no-op if the session already exists. Skipped inside VS Code
+terminals (which have their own integrated terminal experience).
+
+#+begin_src shell
+# -- Default tmux session ------------------------------------------------------
+# Auto-create the "Default" session with four general-purpose windows.
+_create_default_tmux_session() {
+  [[ "$TERM_PROGRAM" == "vscode" ]] && return
+  [[ -n "$TMUX" ]] && return
+  command -v tmux >/dev/null 2>&1 || return
+
+  tmux has-session -t Default 2>/dev/null && return
+
+  # 1. General
+  tmux new-session -d -s Default -n General -c "$HOME"
+
+  # 2. Charm
+  tmux new-window -t Default -n Charm -c "$HOME/git/Charm"
+
+  # 3. MDAD
+  tmux new-window -t Default -n MDAD -c "$HOME/git/matrix-docker-ansible-deploy"
+
+  # 4. Matrix (mosh)
+  tmux new-window -t Default -n Matrix -c "$HOME"
+  tmux send-keys -t Default:Matrix 'mssh root@matrix-cloudhub-1.cloudhub.social' Enter
+
+  tmux select-window -t Default:General
+}
+[[ "$TERM_PROGRAM" != "vscode" ]] && _create_default_tmux_session
+#+end_src
+
+** Claude tmux session
+
+Auto-create the ~claude~ session with four windows, each running ~claude --remote-control~ in its
+project directory. This lets Dispatch route code tasks to named Claude Code sessions. Skipped if the
+~claude~ CLI is not installed or if already inside tmux.
+
+#+begin_src shell
+# -- Claude tmux session -------------------------------------------------------
+# Auto-create the "claude" session with three remote-enabled Claude CLI windows.
+# Runs on every non-vscode shell that starts outside tmux; the has-session guard
+# makes it a no-op once the session exists.
+_create_claude_tmux_session() {
+  # Skip in VS Code terminals and when already inside tmux
+  [[ "$TERM_PROGRAM" == "vscode" ]] && return
+  [[ -n "$TMUX" ]] && return
+  command -v tmux   >/dev/null 2>&1 || return
+  command -v claude >/dev/null 2>&1 || return
+
+  # Nothing to do if the session already exists
+  tmux has-session -t claude 2>/dev/null && return
+
+  # 1. General
+  tmux new-session -d -s claude -n General -c "$HOME"
+  tmux send-keys -t claude:General 'claude --remote-control General' Enter
+
+  # 2. Charm
+  tmux new-window -t claude -n Charm -c "$HOME/git/Charm"
+  tmux send-keys -t claude:Charm 'claude --remote-control Charm' Enter
+
+  # 3. MDAD
+  tmux new-window -t claude -n MDAD -c "$HOME/git/matrix-docker-ansible-deploy"
+  tmux send-keys -t claude:MDAD 'claude --remote-control MDAD' Enter
+
+  # 4. Knowledge-Platform
+  tmux new-window -t claude -n Knowledge-Platform -c "$HOME/git/Knowledge-Platform"
+  tmux send-keys -t claude:Knowledge-Platform 'claude --remote-control Knowledge-Platform' Enter
+
+  tmux select-window -t claude:Charm
+}
+[[ "$TERM_PROGRAM" != "vscode" ]] && _create_claude_tmux_session
+#+end_src
+
 ** VS Code Shell Integration
 
 Must be sourced *after* P10K. P10K overwrites ~precmd~/~preexec~ hooks during its init; if shell
@@ -656,4 +732,70 @@ integration is sourced before P10K, its OSC 133 hooks are stripped and VS Code n
 # VS Code shell integration — must be sourced LAST, after p10k, so its precmd/preexec
 # hooks are appended on top of p10k's and not overwritten by it.
 [[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+#+end_src
+
+** mssh — mosh auto-connect wrapper
+
+Drop-in ~ssh~ replacement that transparently uses ~mosh~ for hosts listed in ~~/.mosh_hosts~. If the
+host entry includes a tmux session name, it attaches (or creates) that session inside mosh.
+Falls back to plain ~ssh~ for unknown hosts.
+
+#+begin_src shell
+# --- mssh / mosh auto-connect (added by mosh-setup) ---
+_mssh_get_host() {
+  local skip_next=false
+  for arg in "$@"; do
+    if $skip_next; then skip_next=false; continue; fi
+    case "$arg" in
+      -[bcDEeFiIJlLmopQRSw]) skip_next=true ;;
+      -*) ;;
+      *)  printf '%s' "${arg##*@}"; return ;;
+    esac
+  done
+}
+
+mssh() {
+  # Drop-in ssh wrapper: uses mosh for registered hosts, with optional tmux.
+  local host hosts_file line tmux_session=""
+  host="$(_mssh_get_host "$@")"
+  hosts_file="${MOSH_HOSTS_FILE:-${HOME}/.mosh_hosts}"
+
+  if [[ -n "$host" && -f "$hosts_file" ]]; then
+    line="$(grep -m1 "^${host}" "$hosts_file" 2>/dev/null || true)"
+    if [[ -n "$line" ]]; then
+      tmux_session="$(printf '%s' "$line" | awk '{print $2}')"
+      if [[ -n "$tmux_session" ]]; then
+        echo "[mssh] mosh → ${host} (tmux: ${tmux_session})" >&2
+        mosh "$@" -- tmux new-session -A -s "$tmux_session"
+      else
+        echo "[mssh] mosh → ${host}" >&2
+        mosh "$@"
+      fi
+      return
+    fi
+  fi
+
+  ssh "$@"
+}
+# --- end mssh ---
+#+end_src
+
+** LM Studio CLI
+
+Adds the ~lms~ CLI (LM Studio's command-line tool) to PATH.
+
+#+begin_src shell
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/evie/.lmstudio/bin"
+# End of LM Studio CLI section
+#+end_src
+
+** tmuxinator
+
+Adds ~tmuxinator~ gem bin to PATH and sources its zsh completion.
+
+#+begin_src shell
+# tmuxinator
+export PATH="$PATH:/opt/homebrew/lib/ruby/gems/4.0.0/bin"
+source /opt/homebrew/lib/ruby/gems/4.0.0/gems/tmuxinator-3.4.0/completion/tmuxinator.zsh
 #+end_src
