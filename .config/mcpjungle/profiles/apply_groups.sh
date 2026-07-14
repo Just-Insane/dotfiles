@@ -16,7 +16,7 @@ fi
 
 for profile in "$base"/mcpjungle-groups/*.json; do
   case "$(basename "$profile")" in
-    *-change.json)
+    *-change.json|approved-actions.json)
       if [ "${INCLUDE_CHANGE_PROFILES:-}" != "1" ]; then
         echo "Skipping approval-gated change profile $(basename "$profile")"
         continue

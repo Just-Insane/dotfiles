@@ -65,7 +65,7 @@ def main() -> int:
             continue
         if len(tools) != len(set(tools)):
             errors.append(f"{path.name}: duplicate included_tools entries")
-        if not path.stem.endswith("-change"):
+        if not (path.stem.endswith("-change") or path.stem == "approved-actions"):
             if profile.get("included_servers"):
                 errors.append(f"{path.name}: read profiles must cherry-pick tools, not whole servers")
             risky = [tool for tool in tools if CHANGE_ACTION.search(tool.split("__", 1)[-1])]

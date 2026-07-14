@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "defaultMode": "default"
+  },
+  "enableAllProjectMcpServers": false,
+  "enableWorkflows": true,
+  "enabledPlugins": {
+    "claude-code-setup@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "project-artifact@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true
+  },
+  "theme": "auto",
+  "autoCompactEnabled": true,
+  "fileCheckpointingEnabled": true,
+  "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "computerUse": true,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/remind-knowledge-platform.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(pnpm tauri *)",
+            "command": "jq -c '{hookSpecificOutput:{hookEventName:\"PreToolUse\",updatedInput:{command:(\"export APPLE_SIGNING_IDENTITY=\\\"Charm Dev Self-Signed\\\"; \" + .tool_input.command)}}}'"
+          }
+        ]
+      }
+    ]
+  }
+}
