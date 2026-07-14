@@ -3,6 +3,11 @@
   "description": "Automatic daily route for retrieval, research, diagnostics, and non-mutating local inspection.",
   "included_tools": [
     "bitwarden__status",
+    "catalog__get_prompt",
+    "catalog__list_prompts",
+    "catalog__list_resources",
+    "catalog__read_resource",
+    "catalog__search_catalog",
     "cloudflare__docs",
     "cloudflare__search",
     "d2__compile-d2",

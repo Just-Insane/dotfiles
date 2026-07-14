@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.gauthier.mcp-relay.hetzner</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/evie/.local/share/mcp-relay/run-with-credential</string>
+        <string>hetzner</string>
+        <string>/Users/evie/.nvm/versions/node/v24.14.1/bin/node</string>
+        <string>/Users/evie/.local/share/mcp-relay/node_modules/supergateway/dist/index.js</string>
+        <string>--stdio</string>
+        <string>/Users/evie/.local/bin/mcp-hetzner</string>
+        <string>--outputTransport</string>
+        <string>streamableHttp</string>
+        <string>--stateful</string>
+        <string>--sessionTimeout</string>
+        <string>120000</string>
+        <string>--port</string>
+        <string>8945</string>
+        <string>--healthEndpoint</string>
+        <string>/healthz</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/evie/.local/bin:/Users/evie/.nvm/versions/node/v24.14.1/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>REQUESTS_CA_BUNDLE</key>
+        <string>/Users/evie/.local/share/cloudflare/installed_cert.pem</string>
+        <key>SSL_CERT_FILE</key>
+        <string>/Users/evie/.local/share/cloudflare/installed_cert.pem</string>
+    </dict>
+    <key>KeepAlive</key>
+    <false/>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    <key>StandardOutPath</key>
+    <string>/Users/evie/Library/Logs/mcp-relay/hetzner.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/evie/Library/Logs/mcp-relay/hetzner.err.log</string>
+</dict>
+</plist>

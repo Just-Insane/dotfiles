@@ -30,7 +30,7 @@ def classify(tool: dict) -> str:
     annotations = tool.get("annotations") or {}
     read_hint = annotations.get("readOnlyHint") is True
 
-    if server in {"d2", "lastfm", "openfeature"}:
+    if server in {"catalog", "d2", "lastfm", "openfeature"}:
         return READ
     if server == "bitwarden":
         return READ if name == "status" else ACTIONS

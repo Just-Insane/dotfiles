@@ -35,7 +35,7 @@ services:
     depends_on:
       db: {condition: service_healthy}
     read_only: true
-    tmpfs: [/tmp:size=64m,mode=1777]
+    tmpfs: ["/tmp:size=64m,mode=1777"]
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     logging:
@@ -56,6 +56,26 @@ services:
     networks: [backend]
     depends_on: [mcpjungle]
     read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  catalog-mcp:
+    build:
+      context: ./catalog
+    container_name: mcp-platform-catalog
+    restart: unless-stopped
+    environment:
+      CATALOG_CONTENT_ROOT: /catalog/content
+      CATALOG_BEARER_TOKEN: ${CATALOG_BEARER_TOKEN}
+      FASTMCP_DOCKET_URL: memory://
+    volumes:
+      - ./catalog/content:/catalog/content:ro
+    networks: [edge]
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     logging:
