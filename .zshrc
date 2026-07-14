@@ -463,7 +463,7 @@ _create_default_tmux_session() {
   tmux has-session -t Default 2>/dev/null && return
 
   # 1. General
-  tmux new-session -d -s Default -n General -c "$HOME"
+  tmux new-session -d -s Default -n General -c "$HOME" || return
 
   # 2. Charm
   tmux new-window -t Default -n Charm -c "$HOME/git/Charm"
@@ -494,7 +494,7 @@ _create_claude_tmux_session() {
   tmux has-session -t claude 2>/dev/null && return
 
   # 1. General
-  tmux new-session -d -s claude -n General -c "$HOME"
+  tmux new-session -d -s claude -n General -c "$HOME" || return
   tmux send-keys -t claude:General 'claude --remote-control General' Enter
 
   # 2. Charm
@@ -562,3 +562,26 @@ export PATH="$PATH:/Users/evie/.lmstudio/bin"
 # tmuxinator
 export PATH="$PATH:/opt/homebrew/lib/ruby/gems/4.0.0/bin"
 source /opt/homebrew/lib/ruby/gems/4.0.0/gems/tmuxinator-3.4.0/completion/tmuxinator.zsh
+
+# Charm 2.0 local dev: stable self-signed identity so the Tauri app's Keychain
+# ACL survives rebuilds (ad-hoc signing rehashes on every build otherwise).
+export APPLE_SIGNING_IDENTITY="Charm Dev Self-Signed"
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/evie/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
+
+# Block local `cargo test` — the shared Cargo target dir
+# ($CARGO_TARGET_DIR, see .zshenv) grew to ~90GB from repeated local test
+# builds across worktrees. Rely on CI's cargo test instead. Override with
+# CARGO_TEST_LOCAL_OK=1 for the rare case you actually need a local run.
+cargo() {
+  if [[ "$1" == "test" && -z "$CARGO_TEST_LOCAL_OK" ]]; then
+    echo "cargo test is disabled locally (target cache growth) — CI runs it on every PR." >&2
+    echo "Override once with: CARGO_TEST_LOCAL_OK=1 cargo test ..." >&2
+    return 1
+  fi
+  command cargo "$@"
+}
