@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+
+# Backward-compatible read-only alias. New client configuration should use
+# mcp-portal-relay with an explicit read or actions argument.
+exec /Users/evie/.local/bin/mcp-portal-relay read

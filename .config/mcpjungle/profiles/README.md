@@ -94,3 +94,4 @@ Cloudflare, GitHub, and the other remote services enter through MCPJungle and
 Cloudflare so calls share one policy and audit path. Local product runtime
 plumbing remains local by design: Codex's Node/browser/computer-use bridges and
 Claude's built-in Design MCP do not provide a parallel route to these services.
+The legacy broad `mcp-portal.gauthier.id` Portal has been retired.
