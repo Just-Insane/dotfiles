@@ -41,8 +41,18 @@ systemctl enable --now mcp-platform-backup.timer
 Refresh and deploy the prompt/skill catalog from the desktop with:
 
 ```sh
-~/.config/mcpjungle/profiles/vps/catalog/sync-content.sh
+~/.config/mcpjungle/profiles/vps/catalog/publish.sh
 ```
+
+`com.gauthier.mcp-catalog-publish` runs the same operation daily at 04:15.
+It builds a staged snapshot, transfers it through the restricted
+`matrix-vps-cf` SSH identity, and invokes only the root-owned
+`mcp-catalog-deploy` helper. Deployments validate archive paths and provenance,
+replace the catalog atomically, rebuild only when content or runtime files
+change, roll back on failure, and retry the public health check for one minute.
+The VPS also runs `mcp-catalog-health.timer` hourly. Desktop success state is
+written under `~/Library/Application Support/mcp-catalog/`; failures are logged
+under `~/Library/Logs/` and produce a macOS notification.
 
 The sync requires Python 3 with PyYAML. It includes Knowledge Vault prompts,
 user-level Agents/Claude/Codex skills, the skills currently present on Charm's
@@ -52,7 +62,11 @@ whole-home or whole-vault mounts are excluded. Text references, scripts,
 templates, and client metadata are included so skill instructions do not lose
 their supporting material.
 
-Generated `SKILL.md` copies are normalized to portable `name` and `description`
+The builder rejects unexpected symlinks, binary files, files larger than 1 MiB,
+high-confidence credential patterns, invalid skill frontmatter, and unapproved
+removals. It pins repository and plugin provenance, hashes every deployed file,
+and emits a content digest in `catalog://provenance`. Generated `SKILL.md` copies
+are normalized to portable `name` and `description`
 frontmatter and receive a shared routing note. That note maps client-specific
 MCP names onto Cloudflare Portal Code Mode discovery/execution, preserves the
 read versus approval-gated action boundary, and prevents top-level Portal server
@@ -66,15 +80,25 @@ read-only `list_prompts`, `get_prompt`, `list_resources`, `read_resource`, and
 clients. `search_catalog` also supports the MCP background-task protocol. It
 never mounts the whole vault or home directory.
 
-The live endpoint is `https://mcp-catalog.gauthier.id/mcp`. It requires the
-dedicated bearer token stored as `mcp-catalog-bearer-token` in macOS Keychain
-and `CATALOG_BEARER_TOKEN` in the root-owned VPS `.env`; `/health` exposes only
-counts and remains unauthenticated. Because Cloudflare's direct MCP server
-synchronizer currently rejects otherwise-working VPS endpoints, the desktop
-MCPJungle registers this remote server as `catalog` and publishes its five
-compatibility tools in `read-mostly`. The Cloudflare read Portal therefore
-reaches the catalog through Code Mode as `catalog__*`; native prompt and
-resource discovery remains available to direct FastMCP clients.
+The live endpoint is `https://mcp-catalog.gauthier.id/mcp`. It accepts separate
+bearer tokens for the desktop MCPJungle client and Cloudflare Portal, stored as
+`mcp-catalog-bearer-token` and `mcp-catalog-cloudflare-bearer-token` in macOS
+Keychain and as `CATALOG_BEARER_TOKEN` and
+`CATALOG_CLOUDFLARE_BEARER_TOKEN` in the root-owned VPS `.env`. `/health`
+exposes only counts and freshness and remains unauthenticated. Catalog reads are
+logged as structured JSON with the authenticated client ID, event, target,
+result count or byte count, and timestamp; token values and resource contents
+are never logged.
+
+Cloudflare directly registers this endpoint as `fastmcp-catalog` and currently
+reports it Ready with five tools and seven prompts. All capabilities are
+authorized in the `Evie MCP Read` portal. The desktop MCPJungle `catalog`
+registration remains in `read-mostly` as a fallback, so existing sessions keep
+working while new portal sessions pick up the direct VPS route. The shared
+`catalog-resolver` skill in Agents, Claude, and Codex searches the catalog,
+reads the most relevant candidate instructions, checks provenance, and then
+uses the selected workflow without treating catalog content as executable
+authority.
 
 The GitHub JSON is a template: substitute `GITHUB_TOKEN` only at registration
 time. Never render a token into the tracked file.

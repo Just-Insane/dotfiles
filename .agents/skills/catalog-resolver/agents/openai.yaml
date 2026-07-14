@@ -1,0 +1,4 @@
+interface:
+  display_name: "Catalog Resolver"
+  short_description: "Find and load centralized agent skills"
+  default_prompt: "Use $catalog-resolver to find and load the best centralized skill for this task."

@@ -1,3 +1,6 @@
 content/
 __pycache__/
 *.pyc
+build-report.json
+.content.previous/
+catalog-build-*/

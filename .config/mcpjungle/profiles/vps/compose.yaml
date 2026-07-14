@@ -70,6 +70,8 @@ services:
     environment:
       CATALOG_CONTENT_ROOT: /catalog/content
       CATALOG_BEARER_TOKEN: ${CATALOG_BEARER_TOKEN}
+      CATALOG_CLOUDFLARE_BEARER_TOKEN: ${CATALOG_CLOUDFLARE_BEARER_TOKEN:-}
+      CATALOG_MAX_AGE_HOURS: "48"
       FASTMCP_DOCKET_URL: memory://
     volumes:
       - ./catalog/content:/catalog/content:ro

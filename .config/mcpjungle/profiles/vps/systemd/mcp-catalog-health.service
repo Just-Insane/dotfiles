@@ -1,0 +1,8 @@
+[Unit]
+Description=Validate FastMCP catalog health and freshness
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/mcp-catalog-health
