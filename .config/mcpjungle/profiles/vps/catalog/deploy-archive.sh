@@ -58,10 +58,10 @@ old_hash=""
 if [ -f "$current/content/provenance.json" ]; then
   old_hash=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("content_sha256", ""))' "$current/content/provenance.json")
 fi
-new_runtime_hash=$(sha256sum "$next/Dockerfile" "$next/server.py" "$next_compose" | sha256sum | cut -d' ' -f1)
+new_runtime_hash=$(cat "$next/Dockerfile" "$next/server.py" "$next_compose" | sha256sum | cut -d' ' -f1)
 old_runtime_hash=""
 if [ -f "$current/Dockerfile" ] && [ -f "$current/server.py" ] && [ -f "$platform/compose.yaml" ]; then
-  old_runtime_hash=$(sha256sum "$current/Dockerfile" "$current/server.py" "$platform/compose.yaml" | sha256sum | cut -d' ' -f1)
+  old_runtime_hash=$(cat "$current/Dockerfile" "$current/server.py" "$platform/compose.yaml" | sha256sum | cut -d' ' -f1)
 fi
 
 if [ "$new_hash" = "$old_hash" ] && [ "$new_runtime_hash" = "$old_runtime_hash" ]; then
