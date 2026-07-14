@@ -1,0 +1,28 @@
+{
+  "name": "security-research",
+  "description": "Disposable browser research and diagram rendering; no host execution, credentials, personal data, or write-capable research vault.",
+  "included_tools": [
+    "d2__compile-d2",
+    "d2__fetch_d2_cheat_sheet",
+    "d2__render-d2",
+    "playwright__browser_click",
+    "playwright__browser_close",
+    "playwright__browser_console_messages",
+    "playwright__browser_evaluate",
+    "playwright__browser_fill_form",
+    "playwright__browser_find",
+    "playwright__browser_handle_dialog",
+    "playwright__browser_hover",
+    "playwright__browser_navigate",
+    "playwright__browser_navigate_back",
+    "playwright__browser_network_requests",
+    "playwright__browser_press_key",
+    "playwright__browser_resize",
+    "playwright__browser_select_option",
+    "playwright__browser_snapshot",
+    "playwright__browser_tabs",
+    "playwright__browser_take_screenshot",
+    "playwright__browser_type",
+    "playwright__browser_wait_for"
+  ]
+}

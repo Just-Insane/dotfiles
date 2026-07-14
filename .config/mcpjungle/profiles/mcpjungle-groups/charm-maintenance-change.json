@@ -1,0 +1,15 @@
+{
+  "name": "charm-maintenance-change",
+  "description": "Approval-gated Charm collaboration actions; excludes merge, repository creation, deletion, branch updates, administration, and workflow dispatch.",
+  "included_tools": [
+    "github__add_comment_to_pending_review",
+    "github__add_issue_comment",
+    "github__add_reply_to_pull_request_comment",
+    "github__create_branch",
+    "github__create_pull_request",
+    "github__issue_write",
+    "github__pull_request_review_write",
+    "github__request_copilot_review",
+    "github__update_pull_request"
+  ]
+}
