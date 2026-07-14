@@ -1,0 +1,21 @@
+{
+  "name": "playwright",
+  "transport": "stdio",
+  "description": "Headless, isolated browser automation with artifacts confined to a bounded local output directory.",
+  "command": "/usr/bin/env",
+  "args": [
+    "-C",
+    "/Users/evie/.local/share/mcp-relay/output/playwright",
+    "/Users/evie/.nvm/versions/node/v24.14.1/bin/node",
+    "/Users/evie/.local/share/mcp-relay/node_modules/@playwright/mcp/cli.js",
+    "--headless",
+    "--isolated",
+    "--output-dir",
+    "/Users/evie/.local/share/mcp-relay/output/playwright",
+    "--output-max-size",
+    "104857600",
+    "--executable-path",
+    "/Users/evie/Library/Caches/ms-playwright/chromium_headless_shell-1232/chrome-headless-shell-mac-arm64/chrome-headless-shell"
+  ],
+  "session_mode": "stateful"
+}

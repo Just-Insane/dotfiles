@@ -1,0 +1,10 @@
+{
+  "name": "macos",
+  "transport": "stdio",
+  "description": "macOS application and automation tools.",
+  "command": "/Users/evie/.nvm/versions/node/v24.14.1/bin/node",
+  "args": [
+    "/Users/evie/.local/share/mcp-relay/node_modules/mcp-macos/bin/run.cjs"
+  ],
+  "session_mode": "stateful"
+}

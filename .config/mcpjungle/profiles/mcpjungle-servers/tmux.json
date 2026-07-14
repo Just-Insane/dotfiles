@@ -1,0 +1,10 @@
+{
+  "name": "tmux",
+  "transport": "stdio",
+  "description": "tmux session and terminal management.",
+  "command": "/Users/evie/.nvm/versions/node/v24.14.1/bin/node",
+  "args": [
+    "/Users/evie/.local/share/mcp-relay/node_modules/tmux-mcp/build/index.js"
+  ],
+  "session_mode": "stateful"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "plaud",
+  "transport": "stdio",
+  "description": "Plaud recordings, transcripts, and summaries with Node trust configured for the local Cloudflare Gateway CA.",
+  "command": "/Users/evie/.local/share/mcp-relay/run-with-credential",
+  "args": [
+    "node-ca",
+    "/Users/evie/.nvm/versions/node/v24.14.1/bin/node",
+    "/Users/evie/.local/share/mcp-relay/node_modules/@plaud-ai/mcp/dist/index.js"
+  ],
+  "session_mode": "stateful"
+}

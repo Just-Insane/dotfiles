@@ -33,6 +33,12 @@ current inventory covers Bitwarden, Cloudflare, D2, DigitalOcean, Fantastical,
 GitHub, Hetzner, Last.fm, macOS services, Matrix, Obsidian, OmniFocus,
 OpenFeature, Plaud, Playwright, Sentry, SSH, and tmux.
 
+Secret-free desktop registrations are canonical under `mcpjungle-servers/`.
+The validator compares their transport, session mode, command, and arguments
+with the live registry so runtime drift fails validation. The FastMCP catalog
+is the sole exception: its live HTTP registration contains an authorization
+header and must be reconstructed from Keychain rather than committed.
+
 Sensitive reads are deliberately routed through `approved-actions`. This
 includes Bitwarden vault contents, SSH file transfer and execution, tmux
 session mutation, Matrix actions, and any multiplexed tool that can write based
@@ -46,6 +52,18 @@ python3 ~/.config/mcpjungle/profiles/validate_profiles.py \
   ~/.config/mcpjungle/profiles/mcpjungle-groups \
   --db ~/.local/share/mcpjungle/mcpjungle.db
 ```
+
+With `--db`, validation also proves that the two operational groups exactly
+match the fail-closed classifier and checks these runtime invariants:
+
+- D2 remains an in-memory renderer without `-write-files`;
+- Playwright remains headless and isolated, with its working directory and
+  bounded output directory both set to
+  `~/.local/share/mcp-relay/output/playwright`;
+- Cloudflare and Plaud Node processes trust the installed Cloudflare Gateway
+  CA through the secret-safe runtime wrapper; and
+- every enabled desktop server except the bearer-backed catalog has a tracked,
+  secret-free registration matching the live registry.
 
 ## Apply after approval
 
@@ -136,3 +154,31 @@ from Keychain. Because Cloudflare Gateway inspects local HTTPS traffic, the
 GitHub container mounts the WARP-managed CA copy at
 `~/.local/share/cloudflare/installed_cert.pem`; that generated certificate is
 not tracked.
+
+## Artifact-return semantics
+
+An MCP tool can produce an artifact without persisting it. D2 accepts source
+text, compiles in memory, and returns SVG or PNG bytes in an MCP image content
+block; the calling agent may then save those bytes in its own authorized
+workspace. Its optional `file_path` refers to the MCP host, and server-side
+output writes remain disabled.
+
+Playwright similarly returns screenshot bytes to the caller, but its upstream
+implementation also creates output files. The server therefore runs with a
+private working/output directory capped at 100 MiB. Relative filenames cannot
+escape that directory, and unrestricted filesystem access remains disabled.
+
+## Audit status — 2026-07-14
+
+Representative live calls succeeded through Cloudflare Code Mode for all 19
+registered services after repairing Cloudflare Gateway CA trust and refreshing
+Plaud OAuth. Cloudflare account access was confirmed against the account that
+contains `gauthier.id` and the other expected zones. The SSH actions route
+successfully reached the Matrix VPS through the Cloudflare listener.
+
+Matrix MCP discovery and profile reads work, but the E2EE client currently logs
+repeated duplicate one-time-key uploads. This indicates stale local Matrix
+device/crypto state rather than a Portal, MCPJungle, Traefik, or homeserver
+routing failure. Resetting that device state must be handled separately with a
+backup because the Matrix server repository currently has unrelated local
+changes.

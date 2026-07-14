@@ -1,0 +1,15 @@
+{
+  "name": "matrix-server",
+  "transport": "stdio",
+  "description": "Matrix server administration and diagnostics.",
+  "command": "/Users/evie/.local/share/mcp-relay/run-with-credential",
+  "args": [
+    "matrix",
+    "/usr/bin/env",
+    "-C",
+    "/Users/evie/git/matrix-mcp-server",
+    "/Users/evie/.nvm/versions/node/v26.4.0/bin/node",
+    "/Users/evie/git/matrix-mcp-server/dist/stdio-server.js"
+  ],
+  "session_mode": "stateful"
+}

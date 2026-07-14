@@ -1,0 +1,11 @@
+{
+  "name": "d2",
+  "transport": "stdio",
+  "description": "D2 diagram rendering.",
+  "command": "/Users/evie/go/bin/d2-mcp",
+  "args": [
+    "-transport",
+    "stdio"
+  ],
+  "session_mode": "stateful"
+}

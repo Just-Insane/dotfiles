@@ -1,0 +1,8 @@
+{
+  "name": "fantastical",
+  "transport": "stdio",
+  "description": "Fantastical calendar and task integration.",
+  "command": "/Users/evie/.local/share/mcp-servers/FantasticalMCP.app/Contents/MacOS/FantasticalMCP",
+  "args": [],
+  "session_mode": "stateful"
+}

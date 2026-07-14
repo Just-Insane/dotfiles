@@ -1,0 +1,15 @@
+{
+  "name": "digitalocean",
+  "transport": "stdio",
+  "description": "DigitalOcean accounts, App Platform, droplets, networking, and Spaces.",
+  "command": "/Users/evie/.local/share/mcp-relay/run-with-credential",
+  "args": [
+    "digitalocean",
+    "/Users/evie/.local/share/mcp-relay/node_modules/@digitalocean/mcp/dist/mcp-digitalocean-darwin-arm64",
+    "-transport",
+    "stdio",
+    "-services",
+    "accounts,apps,droplets,networking,spaces"
+  ],
+  "session_mode": "stateful"
+}

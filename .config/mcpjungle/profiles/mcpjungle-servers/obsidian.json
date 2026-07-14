@@ -1,0 +1,11 @@
+{
+  "name": "obsidian",
+  "transport": "stdio",
+  "description": "Local Obsidian-compatible vault tools.",
+  "command": "/Users/evie/.nvm/versions/node/v24.14.1/bin/node",
+  "args": [
+    "/Users/evie/.local/share/mcp-relay/node_modules/@bitbonsai/mcpvault/dist/server.js",
+    "/Users/evie/git/Knowledge-Platform"
+  ],
+  "session_mode": "stateful"
+}

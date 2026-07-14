@@ -1,0 +1,11 @@
+{
+  "name": "hetzner",
+  "transport": "stdio",
+  "description": "Hetzner Cloud infrastructure management.",
+  "command": "/Users/evie/.local/share/mcp-relay/run-with-credential",
+  "args": [
+    "hetzner",
+    "/Users/evie/.local/bin/mcp-hetzner"
+  ],
+  "session_mode": "stateful"
+}

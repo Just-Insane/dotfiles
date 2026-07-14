@@ -1,0 +1,23 @@
+{
+  "name": "github",
+  "transport": "stdio",
+  "description": "GitHub repositories, pull requests, Actions, code security, Dependabot, and notifications.",
+  "command": "/Users/evie/.local/share/mcp-relay/run-with-credential",
+  "args": [
+    "github",
+    "/usr/local/bin/docker",
+    "run",
+    "-i",
+    "--rm",
+    "-e",
+    "GITHUB_PERSONAL_ACCESS_TOKEN",
+    "-e",
+    "GITHUB_TOOLSETS=default,actions,code_security,dependabot,notifications,secret_protection",
+    "-e",
+    "SSL_CERT_FILE=/etc/ssl/certs/cloudflare-gateway.pem",
+    "-v",
+    "/Users/evie/.local/share/cloudflare/installed_cert.pem:/etc/ssl/certs/cloudflare-gateway.pem:ro",
+    "ghcr.io/github/github-mcp-server"
+  ],
+  "session_mode": "stateful"
+}

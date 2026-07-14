@@ -1,0 +1,11 @@
+{
+  "name": "lastfm",
+  "transport": "stdio",
+  "description": "Last.fm listening history and music tools.",
+  "command": "/Users/evie/.nvm/versions/node/v24.14.1/bin/node",
+  "args": [
+    "/Users/evie/.local/share/mcp-relay/node_modules/mcp-remote/dist/proxy.js",
+    "https://lastfm-mcp.com/mcp"
+  ],
+  "session_mode": "stateful"
+}
