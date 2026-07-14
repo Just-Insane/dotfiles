@@ -56,8 +56,10 @@ and host firewall bouncer protect that path. CrowdSec ports 7422 and 8080 are
 reachable only from local Docker bridges at the host firewall.
 
 Matrix deployment secrets are stored in the separate Bitwarden Secrets Manager
-project `MDAD`, not in `MCP Relay`. The existing Mac Studio and VPS machine
-accounts are reused across projects with project-specific grants. Run the
+project `MDAD`, not in `MCP Relay`. Existing machine accounts are reused across
+projects with project-specific grants: the Mac Studio account reads both
+projects, while the VPS account needs `MDAD` only if Ansible execution moves to
+the VPS. Run the
 playbook through `~/.local/bin/matrix-ansible-bsm`, which obtains its read-only
 machine-account token from macOS Keychain, reconstructs the ignored host vars
 and VAPID keypair with mode 0600, runs the requested command, and removes all
