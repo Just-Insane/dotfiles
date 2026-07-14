@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import mimetypes
 import os
 import re
 from pathlib import Path
@@ -55,7 +56,7 @@ def _entries() -> list[dict[str, str]]:
         root = CONTENT_ROOT / kind
         if not root.exists():
             continue
-        for path in sorted(root.rglob("*.md")):
+        for path in sorted(candidate for candidate in root.rglob("*") if candidate.is_file()):
             if any(part.startswith("._") for part in path.parts):
                 continue
             relative = path.relative_to(root).as_posix()
@@ -64,6 +65,7 @@ def _entries() -> list[dict[str, str]]:
                     "kind": kind,
                     "path": relative,
                     "uri": f"catalog://content/{kind}/{relative}",
+                    "mime_type": mimetypes.guess_type(path.name)[0] or "text/plain",
                 }
             )
     return entries
@@ -76,7 +78,7 @@ def manifest() -> str:
     return json.dumps({"count": len(entries), "entries": entries}, indent=2)
 
 
-@mcp.resource("catalog://content/{kind}/{relative_path*}", mime_type="text/markdown")
+@mcp.resource("catalog://content/{kind}/{relative_path*}", mime_type="text/plain")
 def catalog_content(kind: str, relative_path: str) -> str:
     """Read one allowlisted prompt or skill document."""
     return _safe_path(kind, relative_path).read_text(encoding="utf-8")
@@ -95,7 +97,7 @@ async def search_catalog(query: str, kind: str = "all", limit: int = 20) -> list
     for entry in _entries():
         if kind != "all" and entry["kind"] != kind:
             continue
-        text = _safe_path(entry["kind"], entry["path"]).read_text(encoding="utf-8")
+        text = _safe_path(entry["kind"], entry["path"]).read_text(encoding="utf-8", errors="replace")
         haystack = f"{entry['path']}\n{text}".lower()
         score = sum(haystack.count(term) for term in terms)
         if score:
@@ -140,6 +142,9 @@ async def health(_request):
             "entries": len(entries),
             "prompts": sum(1 for entry in entries if entry["kind"] == "prompts"),
             "skills": sum(1 for entry in entries if entry["kind"] == "skills"),
+            "skill_packages": sum(
+                1 for entry in entries if entry["kind"] == "skills" and entry["path"].endswith("/SKILL.md")
+            ),
         }
     )
 

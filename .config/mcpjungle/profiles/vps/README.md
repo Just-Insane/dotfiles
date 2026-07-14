@@ -8,9 +8,10 @@ VPS. Runtime secrets live only in `/srv/mcp-platform/secrets`, the root-owned
 
 - `compose.yaml`: PostgreSQL, MCPJungle Enterprise, the read-only FastMCP
   catalog, Prometheus, and cloudflared.
-- `catalog/`: FastMCP 3 catalog server plus a local allowlist sync script. The
-  generated `catalog/content/` snapshot is deployed but intentionally ignored;
-  the Knowledge Vault and installed skill directories remain canonical.
+- `catalog/`: FastMCP 3 catalog server plus a configuration-aware allowlist
+  sync. The generated `catalog/content/` snapshot is deployed but intentionally
+  ignored; the Knowledge Vault, project repositories, user skill directories,
+  and client plugin caches remain canonical.
 - `prometheus.yml`: private MCPJungle metrics scrape.
 - `servers/github.json`: provider-hosted GitHub remote MCP template.
 - `worker/mcp-vps-bridge.mjs`: authenticated Cloudflare Worker bridge used for
@@ -43,7 +44,23 @@ Refresh and deploy the prompt/skill catalog from the desktop with:
 ~/.config/mcpjungle/profiles/vps/catalog/sync-content.sh
 ```
 
-The catalog exposes native prompts, resources, and a resource template, plus
+The sync requires Python 3 with PyYAML. It includes Knowledge Vault prompts,
+user-level Agents/Claude/Codex skills, the skills currently present on Charm's
+`origin/main`, and skills from plugins currently enabled in Claude and Codex.
+System skills, disabled plugins, binary assets, credentials, worktrees, and
+whole-home or whole-vault mounts are excluded. Text references, scripts,
+templates, and client metadata are included so skill instructions do not lose
+their supporting material.
+
+Generated `SKILL.md` copies are normalized to portable `name` and `description`
+frontmatter and receive a shared routing note. That note maps client-specific
+MCP names onto Cloudflare Portal Code Mode discovery/execution, preserves the
+read versus approval-gated action boundary, and prevents top-level Portal server
+listing from being mistaken for the MCPJungle service inventory. Originals are
+never rewritten. Override `CHARM_REPO`, `CHARM_REF`, or `KNOWLEDGE_VAULT` when
+building from a different checkout or ref.
+
+The catalog exposes native prompts, text resources, and a resource template, plus
 read-only `list_prompts`, `get_prompt`, `list_resources`, `read_resource`, and
 `search_catalog` compatibility tools for Cloudflare Code Mode and tool-only
 clients. `search_catalog` also supports the MCP background-task protocol. It
