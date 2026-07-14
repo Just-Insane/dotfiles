@@ -17,6 +17,9 @@ VPS. Runtime secrets live only in `/srv/mcp-platform/secrets`, the root-owned
 - `worker/mcp-vps-bridge.mjs`: authenticated Cloudflare Worker bridge used for
   origin troubleshooting; its secrets are Worker bindings.
 - `backup.sh` and `systemd/*`: root-only daily PostgreSQL backup and validation.
+- `firewall/`: tracked host ingress policy, deployment helper, and Matrix/
+  CrowdSec regression checks. Public SSH remains available for Ansible and
+  break-glass recovery and is monitored by CrowdSec.
 
 The VPS has no published MCPJungle, PostgreSQL, or Prometheus ports. Cloudflare
 Tunnel is the only HTTP ingress. Browser SSH and headless agent SSH use distinct
@@ -37,6 +40,38 @@ install -m 0644 /srv/mcp-platform/systemd/mcp-platform-backup.timer /etc/systemd
 systemctl daemon-reload
 systemctl enable --now mcp-platform-backup.timer
 ```
+
+Deploy or refresh the tracked firewall and five-minute health timer with:
+
+```sh
+~/.config/mcpjungle/profiles/vps/firewall/deploy.sh
+```
+
+The health check covers the public Matrix client, federation, and well-known
+endpoints with a two-second latency ceiling; Traefik-to-CrowdSec LAPI and AppSec
+connectivity; recent `appsecQuery:unreachable` errors; and the critical
+firewall, CrowdSec, Traefik, and Synapse units. The Hetzner firewall retains
+TCP/22 for Ansible and break glass. CrowdSec's `linux` and `sshd` collections
+and host firewall bouncer protect that path. CrowdSec ports 7422 and 8080 are
+reachable only from local Docker bridges at the host firewall.
+
+Matrix deployment secrets are stored in Bitwarden Secrets Manager. Run the
+playbook through `~/.local/bin/matrix-ansible-bsm`, which obtains its read-only
+machine-account token from macOS Keychain, reconstructs the ignored host vars
+and VAPID keypair with mode 0600, runs the requested command, and removes all
+materialized files even when interrupted:
+
+```sh
+matrix-ansible-bsm -- just install-all
+matrix-ansible-bsm -- ansible-playbook -i inventory/hosts setup.yml --syntax-check
+```
+
+The BSM objects are `MATRIX_ANSIBLE_VARS_YML_GZIP_BASE64`,
+`MATRIX_SYGNAL_VAPID_PRIVATE_PEM`, and `MATRIX_SYGNAL_VAPID_PUBLIC_PEM`. The
+first is gzip-compressed and base64-encoded so the complete ignored host-vars
+configuration, including embedded service credentials and private keys, stays
+within one versioned deployment object. Machine accounts need read access only;
+secret creation and rotation remain human-admin operations.
 
 Refresh and deploy the prompt/skill catalog from the desktop with:
 

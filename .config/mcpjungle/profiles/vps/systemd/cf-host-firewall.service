@@ -1,0 +1,12 @@
+[Unit]
+Description=Cloudflare and host ingress firewall rules
+After=network-online.target docker.service
+Wants=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/cf-web-lockdown.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

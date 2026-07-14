@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO=${MATRIX_ANSIBLE_REPO:-$HOME/git/matrix-docker-ansible-deploy}
+KEYCHAIN_ACCOUNT=${BWS_KEYCHAIN_ACCOUNT:-$USER}
+KEYCHAIN_SERVICE=${BWS_KEYCHAIN_SERVICE:-bws-mcp-mac-studio-access-token}
+
+usage() {
+  cat >&2 <<'EOF'
+Usage: matrix-ansible-bsm [--repo PATH] -- COMMAND [ARG...]
+
+Examples:
+  matrix-ansible-bsm -- just install-all
+  matrix-ansible-bsm -- ansible-playbook -i inventory/hosts setup.yml --syntax-check
+
+The ignored Matrix host-vars file and VAPID keypair are read from Bitwarden
+Secrets Manager, materialized with mode 0600 only while COMMAND runs, and
+removed on exit or interruption.
+EOF
+}
+
+if [[ ${1:-} == --repo ]]; then
+  [[ $# -ge 3 ]] || { usage; exit 2; }
+  REPO=$2
+  shift 2
+fi
+[[ ${1:-} == -- ]] && shift
+[[ $# -gt 0 ]] || { usage; exit 2; }
+
+command -v bws >/dev/null || { echo 'bws is required' >&2; exit 1; }
+command -v jq >/dev/null || { echo 'jq is required' >&2; exit 1; }
+[[ -d "$REPO/.git" ]] || { echo "Matrix playbook repo not found: $REPO" >&2; exit 1; }
+
+vars_file="$REPO/inventory/host_vars/matrix.cloudhub.social/vars.yml"
+vapid_private="$REPO/vapid_private.pem"
+vapid_public="$REPO/vapid_public.pem"
+for target in "$vars_file" "$vapid_private" "$vapid_public"; do
+  [[ ! -e "$target" ]] || {
+    echo "refusing to overwrite existing materialized secret: $target" >&2
+    exit 1
+  }
+done
+
+lock_dir="${TMPDIR:-/tmp}/matrix-ansible-bsm.$UID.lock"
+mkdir "$lock_dir" 2>/dev/null || {
+  echo 'another matrix-ansible-bsm command appears to be running' >&2
+  exit 1
+}
+
+cleanup() {
+  rm -f "$vars_file" "$vapid_private" "$vapid_public"
+  rmdir "$lock_dir" 2>/dev/null || true
+  unset BWS_ACCESS_TOKEN
+}
+trap cleanup EXIT HUP INT TERM
+umask 077
+
+if [[ -z ${BWS_ACCESS_TOKEN:-} ]]; then
+  command -v security >/dev/null || {
+    echo 'set BWS_ACCESS_TOKEN when macOS Keychain is unavailable' >&2
+    exit 1
+  }
+  export BWS_ACCESS_TOKEN
+  BWS_ACCESS_TOKEN=$(security find-generic-password \
+    -a "$KEYCHAIN_ACCOUNT" -s "$KEYCHAIN_SERVICE" -w)
+fi
+
+secret_value() {
+  local key=$1 id
+  id=$(bws secret list | jq -r --arg key "$key" \
+    '.[] | select(.key == $key) | .id' | head -1)
+  [[ -n "$id" ]] || { echo "BSM secret not found: $key" >&2; return 1; }
+  bws secret get "$id" | jq -er '.value'
+}
+
+mkdir -p "$(dirname "$vars_file")"
+tmp_vars="$lock_dir/vars.yml"
+secret_value MATRIX_ANSIBLE_VARS_YML_GZIP_BASE64 \
+  | openssl base64 -d -A \
+  | gzip -dc >"$tmp_vars"
+secret_value MATRIX_SYGNAL_VAPID_PRIVATE_PEM >"$lock_dir/vapid_private.pem"
+secret_value MATRIX_SYGNAL_VAPID_PUBLIC_PEM >"$lock_dir/vapid_public.pem"
+chmod 0600 "$tmp_vars" "$lock_dir/vapid_private.pem" "$lock_dir/vapid_public.pem"
+mv "$tmp_vars" "$vars_file"
+mv "$lock_dir/vapid_private.pem" "$vapid_private"
+mv "$lock_dir/vapid_public.pem" "$vapid_public"
+
+(cd "$REPO" && "$@")

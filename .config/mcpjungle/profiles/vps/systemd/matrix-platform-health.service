@@ -1,0 +1,9 @@
+[Unit]
+Description=Matrix edge, origin, and CrowdSec regression checks
+After=network-online.target docker.service cf-host-firewall.service crowdsec.service matrix-traefik.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/matrix-platform-health
+User=root

@@ -1,0 +1,8 @@
+*~
+.DS_Store
+
+**/.claude/settings.local.json
+
+# Runtime-only deployment key material.
+/vapid_private.pem
+/vapid_public.pem
