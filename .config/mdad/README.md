@@ -8,7 +8,8 @@ This directory is the tracked, secret-free source for Evie's
 - `matrix.cloudhub.social/secret-keys.txt` is the allowlist of BSM objects that
   `~/.local/bin/matrix-ansible-bsm` may inject into an Ansible process.
 - The BSM project is `MDAD` (`7d21a45b-e63a-4177-9020-b48701662eda`).
-- The playbook inventory path is a local symlink to the tracked `vars.yml`.
+- The playbook inventory path is a local symlink to the tracked `vars.yml`;
+  `matrix-ansible-bsm` recreates it automatically after a fresh clone.
 
 Edit configuration normally at either path:
 

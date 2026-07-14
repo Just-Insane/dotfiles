@@ -39,6 +39,10 @@ secret_keys_file="$CONFIG_ROOT/secret-keys.txt"
 vars_file="$REPO/inventory/host_vars/matrix.cloudhub.social/vars.yml"
 [[ -f "$vars_source" ]] || { echo "tracked MDAD vars missing: $vars_source" >&2; exit 1; }
 [[ -f "$secret_keys_file" ]] || { echo "MDAD secret allowlist missing: $secret_keys_file" >&2; exit 1; }
+if [[ ! -e "$vars_file" && ! -L "$vars_file" ]]; then
+  mkdir -p "$(dirname "$vars_file")"
+  ln -s "$vars_source" "$vars_file"
+fi
 [[ -e "$vars_file" && "$vars_file" -ef "$vars_source" ]] || {
   echo "inventory vars must link to tracked source: $vars_source" >&2
   exit 1
