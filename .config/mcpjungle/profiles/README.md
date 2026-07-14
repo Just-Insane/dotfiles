@@ -95,3 +95,30 @@ Cloudflare so calls share one policy and audit path. Local product runtime
 plumbing remains local by design: Codex's Node/browser/computer-use bridges and
 Claude's built-in Design MCP do not provide a parallel route to these services.
 The legacy broad `mcp-portal.gauthier.id` Portal has been retired.
+
+## VPS fallback and Cloudflare SSH
+
+The secret-free VPS deployment source is in `vps/`. The live isolated stack on
+the Matrix VPS uses PostgreSQL, MCPJungle Enterprise, Prometheus, and a
+Cloudflare Tunnel, with no MCP, database, or metrics ports published on the
+host. A validated root-only database backup runs daily.
+
+Cloudflare SSH uses separate human and machine applications:
+
+- `ssh-vps.gauthier.id` and `ssh-desktop.gauthier.id` render browser terminals
+  after human Access login.
+- `ssh-agent-vps.gauthier.id` and `ssh-agent-desktop.gauthier.id` accept only
+  the dedicated agent service token. `~/.local/bin/cloudflare-ssh-proxy` reads
+  that credential from Keychain at runtime.
+- `matrix-vps-cf` and `desktop-cf` are the corresponding OpenSSH aliases.
+
+The existing SSH MCP reaches the VPS through the local
+`cloudflare-ssh-listener` on `127.0.0.1:2222`; it no longer connects to the
+public VPS SSH address directly. Public port 22 remains a break-glass path until
+the Hetzner firewall inventory and an interactive browser login are verified.
+
+The local GitHub MCP runs through `mcp-github-relay`, which reads its credential
+from Keychain. Because Cloudflare Gateway inspects local HTTPS traffic, the
+GitHub container mounts the WARP-managed CA copy at
+`~/.local/share/cloudflare/installed_cert.pem`; that generated certificate is
+not tracked.

@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+export GITHUB_PERSONAL_ACCESS_TOKEN
+GITHUB_PERSONAL_ACCESS_TOKEN=$(/usr/bin/security find-generic-password -w -a "$USER" -s mcp-github-personal-access-token)
+
+exec /Users/evie/.nvm/versions/node/v24.14.1/bin/node \
+  /Users/evie/.local/share/mcp-relay/node_modules/supergateway/dist/index.js \
+  --stdio "/usr/local/bin/docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN -e SSL_CERT_FILE=/etc/ssl/certs/cloudflare-gateway.pem -v /Users/evie/.local/share/cloudflare/installed_cert.pem:/etc/ssl/certs/cloudflare-gateway.pem:ro ghcr.io/github/github-mcp-server" \
+  --outputTransport streamableHttp \
+  --stateful \
+  --sessionTimeout 120000 \
+  --port 8940

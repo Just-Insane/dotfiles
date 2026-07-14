@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+
+hostname=${1:?usage: cloudflare-ssh-listener HOSTNAME LISTEN_ADDRESS}
+listen_address=${2:?usage: cloudflare-ssh-listener HOSTNAME LISTEN_ADDRESS}
+
+export TUNNEL_SERVICE_TOKEN_ID
+export TUNNEL_SERVICE_TOKEN_SECRET
+TUNNEL_SERVICE_TOKEN_ID=$(/usr/bin/security find-generic-password -w -a "$USER" -s cloudflare-ssh-agent-client-id)
+TUNNEL_SERVICE_TOKEN_SECRET=$(/usr/bin/security find-generic-password -w -a "$USER" -s cloudflare-ssh-agent-client-secret)
+
+exec /opt/homebrew/bin/cloudflared access tcp --hostname "$hostname" --url "$listen_address"

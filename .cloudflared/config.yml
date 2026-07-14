@@ -1,0 +1,14 @@
+tunnel: 0950c514-1848-4cc5-b768-4433794cb806
+protocol: http2
+credentials-file: /Users/evie/.cloudflared/0950c514-1848-4cc5-b768-4433794cb806.json
+
+ingress:
+  - hostname: mcp.gauthier.id
+    service: http://127.0.0.1:8950
+  - hostname: mcp-origin.gauthier.id
+    service: http://127.0.0.1:8950
+  - hostname: ssh-desktop.gauthier.id
+    service: ssh://127.0.0.1:22
+  - hostname: ssh-agent-desktop.gauthier.id
+    service: ssh://127.0.0.1:22
+  - service: http_status:404

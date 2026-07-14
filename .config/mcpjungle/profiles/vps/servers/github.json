@@ -1,0 +1,10 @@
+{
+  "name": "github",
+  "transport": "streamable_http",
+  "description": "GitHub-hosted remote MCP fallback for repository and security workflows.",
+  "url": "https://api.githubcopilot.com/mcp/",
+  "bearer_token": "${GITHUB_TOKEN}",
+  "headers": {
+    "X-MCP-Toolsets": "default,actions,code_security,dependabot,notifications,secret_protection"
+  }
+}

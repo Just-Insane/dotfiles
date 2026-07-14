@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gauthier.cloudflare-ssh-vps-listener</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/evie/.local/bin/cloudflare-ssh-listener</string>
+    <string>ssh-agent-vps.gauthier.id</string>
+    <string>127.0.0.1:2222</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/evie/Library/Logs/mcp-relay/cloudflare-ssh-vps-listener.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/evie/Library/Logs/mcp-relay/cloudflare-ssh-vps-listener.err.log</string>
+</dict>
+</plist>
