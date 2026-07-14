@@ -176,9 +176,11 @@ Plaud OAuth. Cloudflare account access was confirmed against the account that
 contains `gauthier.id` and the other expected zones. The SSH actions route
 successfully reached the Matrix VPS through the Cloudflare listener.
 
-Matrix MCP discovery and profile reads work, but the E2EE client currently logs
-repeated duplicate one-time-key uploads. This indicates stale local Matrix
-device/crypto state rather than a Portal, MCPJungle, Traefik, or homeserver
-routing failure. Resetting that device state must be handled separately with a
-backup because the Matrix server repository currently has unrelated local
-changes.
+Matrix MCP discovery and profile reads work. Its E2EE diagnostic confirms a
+locally verified, cross-signed device with all three private cross-signing keys
+cached and 3,118 backup sessions restored. The client nevertheless logs
+repeated duplicate one-time-key uploads, indicating stale local key-upload
+state and avoidable log/database churn rather than a Portal, MCPJungle,
+Traefik, homeserver-routing, or message-decryption failure. Rotating the Matrix
+MCP device or resetting its crypto store must be handled separately with a
+backup because that operation can affect device trust.
