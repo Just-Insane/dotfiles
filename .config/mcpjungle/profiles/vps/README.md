@@ -55,7 +55,9 @@ TCP/22 for Ansible and break glass. CrowdSec's `linux` and `sshd` collections
 and host firewall bouncer protect that path. CrowdSec ports 7422 and 8080 are
 reachable only from local Docker bridges at the host firewall.
 
-Matrix deployment secrets are stored in Bitwarden Secrets Manager. Run the
+Matrix deployment secrets are stored in the separate Bitwarden Secrets Manager
+project `MDAD`, not in `MCP Relay`. The existing Mac Studio and VPS machine
+accounts are reused across projects with project-specific grants. Run the
 playbook through `~/.local/bin/matrix-ansible-bsm`, which obtains its read-only
 machine-account token from macOS Keychain, reconstructs the ignored host vars
 and VAPID keypair with mode 0600, runs the requested command, and removes all
@@ -70,8 +72,9 @@ The BSM objects are `MATRIX_ANSIBLE_VARS_YML_GZIP_BASE64`,
 `MATRIX_SYGNAL_VAPID_PRIVATE_PEM`, and `MATRIX_SYGNAL_VAPID_PUBLIC_PEM`. The
 first is gzip-compressed and base64-encoded so the complete ignored host-vars
 configuration, including embedded service credentials and private keys, stays
-within one versioned deployment object. Machine accounts need read access only;
-secret creation and rotation remain human-admin operations.
+within one versioned deployment object. Machine accounts need read access only
+during normal operation; secret creation and rotation use a short, deliberate
+write window.
 
 Refresh and deploy the prompt/skill catalog from the desktop with:
 
