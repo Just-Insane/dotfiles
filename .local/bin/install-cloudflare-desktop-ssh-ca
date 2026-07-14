@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+profile_dir="$HOME/.config/mcpjungle/profiles/ssh"
+
+sudo install -o root -g wheel -m 0644 \
+  "$profile_dir/cloudflare-desktop-browser-ca.pub" \
+  /etc/ssh/cloudflare_access_ca.pub
+sudo install -o root -g wheel -m 0644 \
+  "$profile_dir/99-cloudflare-access-ca.conf" \
+  /etc/ssh/sshd_config.d/99-cloudflare-access-ca.conf
+sudo /usr/sbin/sshd -t
+sudo launchctl kickstart -k system/com.openssh.sshd
+
+echo "Cloudflare Access SSH CA installed; sshd configuration is valid."

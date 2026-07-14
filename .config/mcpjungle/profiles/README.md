@@ -117,6 +117,20 @@ The existing SSH MCP reaches the VPS through the local
 public VPS SSH address directly. Public port 22 remains a break-glass path until
 the Hetzner firewall inventory and an interactive browser login are verified.
 
+The browser applications each have a Cloudflare short-lived SSH certificate
+CA. The VPS trusts its CA for the `evie` Unix account; the existing root key is
+retained only as break glass. The desktop CA and sshd drop-in are tracked under
+`profiles/ssh/`; run `install-cloudflare-desktop-ssh-ca` interactively to install
+them because macOS requires an administrator password. Cloudflare derives the
+browser certificate principal from the Access identity, so use `evie`, not
+`root`, in both browser terminals.
+
+Both MCP portals have Secure Web Gateway routing enabled. Tool calls have been
+verified through each portal and the corresponding upstream requests appear in
+Gateway HTTP logs. Cloudflare's native MCP Portal Logs view still returns no
+rows; treat that as an unresolved structured-telemetry issue rather than as an
+absence of Gateway audit data.
+
 The local GitHub MCP runs through `mcp-github-relay`, which reads its credential
 from Keychain. Because Cloudflare Gateway inspects local HTTPS traffic, the
 GitHub container mounts the WARP-managed CA copy at
