@@ -1,0 +1,4 @@
+interface:
+  display_name: "Author D2 Diagrams"
+  short_description: "Create and validate portable D2 diagrams"
+  default_prompt: "Use $author-d2-diagrams to create or convert an architecture diagram with tracked D2 source and a portable SVG render."
