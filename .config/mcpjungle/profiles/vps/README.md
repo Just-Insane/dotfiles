@@ -59,24 +59,24 @@ Matrix deployment secrets are stored in the separate Bitwarden Secrets Manager
 project `MDAD`, not in `MCP Relay`. Existing machine accounts are reused across
 projects with project-specific grants: the Mac Studio account reads both
 projects, while the VPS account needs `MDAD` only if Ansible execution moves to
-the VPS. Run the
-playbook through `~/.local/bin/matrix-ansible-bsm`, which obtains its read-only
-machine-account token from macOS Keychain, reconstructs the ignored host vars
-and VAPID keypair with mode 0600, runs the requested command, and removes all
-materialized files even when interrupted:
+the VPS. The editable, secret-free source is
+`~/.config/mdad/matrix.cloudhub.social/vars.yml`; the ignored playbook inventory
+path is a symlink to it. Run the playbook through
+`~/.local/bin/matrix-ansible-bsm`, which obtains its machine-account token from
+macOS Keychain, reads only the 17 keys in the tracked allowlist, and injects
+their values into the Ansible process environment. It never materializes a
+secret or private-key file:
 
 ```sh
 matrix-ansible-bsm -- just install-all
 matrix-ansible-bsm -- ansible-playbook -i inventory/hosts setup.yml --syntax-check
 ```
 
-The BSM objects are `MATRIX_ANSIBLE_VARS_YML_GZIP_BASE64`,
-`MATRIX_SYGNAL_VAPID_PRIVATE_PEM`, and `MATRIX_SYGNAL_VAPID_PUBLIC_PEM`. The
-first is gzip-compressed and base64-encoded so the complete ignored host-vars
-configuration, including embedded service credentials and private keys, stays
-within one versioned deployment object. Machine accounts need read access only
-during normal operation; secret creation and rotation use a short, deliberate
-write window.
+Each password, token, credential document, or private key is a separate
+`MDAD_*` BSM object. `vars.yml` references them with fail-closed Ansible
+environment lookups. Missing or duplicate objects stop the wrapper before
+Ansible starts. Machine accounts need read access only during normal operation;
+secret creation and rotation use a short, deliberate write window.
 
 Refresh and deploy the prompt/skill catalog from the desktop with:
 

@@ -1,0 +1,965 @@
+---
+# The bare domain name which represents your Matrix identity.
+# Matrix user IDs for your server will be of the form (`@alice:example.com`).
+#
+# Note: this playbook does not touch the server referenced here.
+# Installation happens on another server ("matrix.example.com", see `matrix_server_fqn_matrix`).
+#
+# If you've deployed using the wrong domain, you'll have to run the Uninstalling step,
+# because you can't change the Domain after deployment.
+matrix_domain: cloudhub.social
+
+# The Matrix homeserver software to install.
+# See:
+#  - `roles/custom/matrix-base/defaults/main.yml` for valid options
+#  - the `docs/configuring-playbook-IMPLEMENTATION_NAME.md` documentation page, if one is available for your implementation choice
+#
+# By default, we use Synapse, because it's the only full-featured Matrix server at the moment.
+#
+# Note that the homeserver implementation of a server will not be able to be changed without data loss.
+matrix_homeserver_implementation: synapse
+
+# A secret used as a base, for generating various other secrets.
+# You can put any string here, but generating a strong one is preferred. You can create one with a command like `pwgen -s 64 1`.
+matrix_homeserver_generic_secret_key: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_HOMESERVER_GENERIC_SECRET_KEY', default=undef()) }}"
+
+# By default, the playbook manages its own Traefik (https://doc.traefik.io/traefik/) reverse-proxy server.
+# It will retrieve SSL certificates for you on-demand and forward requests to all other components.
+# For alternatives, see `docs/configuring-playbook-own-webserver.md`.
+matrix_playbook_reverse_proxy_type: playbook-managed-traefik
+
+# Controls whether container networks will be created with IPv6 support.
+#
+# If you also have IPv6 support on your server/network and AAAA DNS records pointing to the server,
+# enabling this will effectively give you full public IPv6 connectivity (powered by NAT66).
+#
+# We recommend leaving this enabled even if you don't currently have IPv6 connectivity on your server/network.
+# This way, once you eventually get IPv6 connectivity, you won't have to change anything (besides DNS records).
+#
+# Flipping this setting later on requires manual work (stopping services, deleting and recreating all container networks).
+#
+# In the future, this setting will likely default to `true`, so if you really want IPv6 disabled, explicitly set this to `false`.
+#
+# People managing Docker themselves and running an older Docker version will need additional configuration.
+#
+# Learn more in `docs/configuring-ipv6.md`.
+devture_systemd_docker_base_ipv6_enabled: true
+devture_systemd_service_manager_up_verification_delay_seconds: 300
+devture_systemd_service_manager_service_restart_mode: clean-stop-start
+matrix_playbook_migration_validated_version: v2026.05.19.0
+
+# A Postgres password to use for the superuser Postgres user (called `matrix` by default).
+#
+# The playbook creates additional Postgres users and databases (one for each enabled service) using this superuser account.
+#
+# Changing this value subsequently requires manual work.
+# The value used here must be shorter than 100 characters.
+postgres_connection_password: "{{ lookup('ansible.builtin.env', 'MDAD_POSTGRES_CONNECTION_PASSWORD', default=undef()) }}"
+postgres_backup_enabled: true
+# enable unix sockets
+postgres_container_unix_socket_enabled: true
+postgres_cli_use_unix_socket_enabled: true
+
+# By default, we configure coturn's external IP address using the value specified for `ansible_host` in your `inventory/hosts` file.
+# If this value is an external IP address, you can skip this section.
+#
+# If `ansible_host` is not the server's external IP address, you have 2 choices:
+# 1. Uncomment the line below, to allow IP address auto-detection to happen (more on this below)
+# 2. Uncomment and adjust the line below to specify an IP address manually
+#
+# By default, auto-detection will be attempted using the `https://ifconfig.co/json` API.
+# Default values for this are specified in `matrix_coturn_turn_external_ip_address_auto_detection_*` variables in the coturn role
+# (see `roles/custom/matrix-coturn/defaults/main.yml`).
+#
+# If your server has multiple IP addresses, you may define them in another variable which allows a list of addresses.
+# Example: `matrix_coturn_turn_external_ip_addresses: ['1.2.3.4', '4.5.6.7']`
+#
+# matrix_coturn_turn_external_ip_address: ''
+
+## Custom config ##
+
+matrix_static_files_container_labels_base_domain_enabled: true
+matrix_admin: "@evie:{{ matrix_domain }}"
+exim_relay_hostname: "mail.{{ matrix_domain }}"
+
+# Synapse
+matrix_synapse_workers_enabled: false
+matrix_synapse_workers_preset: specialized-workers
+# 3. Increase Synapse cache if RAM allows.
+# Default has historically been around 0.5; try 1.0–2.0.
+matrix_synapse_caches_global_factor: 1.2
+matrix_synapse_sentry_dsn: "https://e0ef2e378acddb3986ae6fccc3ae8cc1@o4511094843244544.ingest.de.sentry.io/4511094865657936"
+matrix_synapse_presence_enabled: true
+matrix_synapse_auto_compressor_enabled: true
+matrix_synapse_auto_accept_invites_enabled: true
+matrix_synapse_auto_accept_invites_only_for_direct_messages: false
+matrix_synapse_user_directory_search_all_users: true
+matrix_synapse_user_directory_prefer_local_users: true
+matrix_synapse_push_include_content: false
+
+# Federation via Cloudflare proxy
+matrix_synapse_http_listener_resource_names: ["client", "federation"]
+matrix_federation_public_port: 443
+matrix_synapse_federation_port_enabled: false
+matrix_synapse_tls_federation_listener_enabled: false
+
+# use unix sockets for Redis
+matrix_synapse_redis_path_enabled: "{{ valkey_enabled }}"
+# use unix sockets for Postgres
+matrix_synapse_database_socket_enabled: "{{ matrix_synapse_database_host == postgres_connection_hostname }}"
+
+# Controls whether to enable the "Delayed Events" experimental feature.
+# Delayed events are required for proper call (Element Call) participation signalling.
+# If disabled it is very likely that you end up with stuck calls in Matrix rooms.
+#
+# Related to:
+# - `matrix_synapse_max_event_delay_duration`
+# - `matrix_synapse_rc_delayed_event_mgmt`
+#
+# See https://github.com/matrix-org/matrix-spec-proposals/pull/4140
+matrix_synapse_experimental_features_msc4140_enabled: true
+
+# Controls the maximum allowed duration by which sent events can be delayed, as per MSC4140.
+#
+# See `matrix_synapse_experimental_features_msc4140_enabled`.
+matrix_synapse_max_event_delay_duration: 730h
+
+# Controls whether to enable the MSC4143 experimental feature (RTC transports).
+#
+# This is used by MatrixRTC clients to discover the unstable RTC transports API.
+#
+# See https://github.com/matrix-org/matrix-spec-proposals/pull/4143
+matrix_synapse_experimental_features_msc4143_enabled: true
+
+# Controls whether to enable the MSC4222 experimental feature (adding `state_after` to sync v2).
+#
+# Allow clients to opt-in to a change of the sync v2 API that allows them to correctly track the state of the room.
+# This is required by Element Call to track room state reliably.
+#
+# See https://github.com/matrix-org/matrix-spec-proposals/pull/4222
+matrix_synapse_experimental_features_msc4222_enabled: true
+
+# Controls whether to enable the MSC4306 experimental feature ("thread subscriptions").
+#
+# In current Synapse, this also enables the MSC4308 thread-subscriptions extension
+# to Sliding Sync under the same upstream feature flag.
+#
+# See:
+# - https://github.com/matrix-org/matrix-spec-proposals/pull/4306
+# - https://github.com/matrix-org/matrix-spec-proposals/pull/4308
+matrix_synapse_experimental_features_msc4306_enabled: true
+
+# Controls whether to enable the MSC4354 experimental feature (sticky events).
+#
+# This is implemented since Synapse v1.148.0 and can be used by element-call v0.17.0+
+#
+# See https://github.com/matrix-org/matrix-spec-proposals/pull/4354
+matrix_synapse_experimental_features_msc4354_enabled: false
+
+# matrix_synapse_enable_registration: true
+# matrix_synapse_registration_requires_token: true
+# matrix_synapse_enable_registration_captcha: true
+# matrix_synapse_recaptcha_public_key: "6Lfbp2ssAAAAAMy30i_aL9qhtCmUj6aUTLpVQiLM"
+# matrix_synapse_recaptcha_private_key: "REMOVED_BY_INCIDENT_RESPONSE"
+
+matrix_synapse_trusted_key_servers:
+  - server_name: "matrix.org"
+  - server_name: "matrixrooms.info"
+
+matrix_synapse_server_notices_enabled: true
+matrix_synapse_server_notices_auto_join: true
+
+# Synapse Admin
+matrix_ketesa_enabled: true
+matrix_ketesa_hostname: admin.cloudhub.social
+matrix_ketesa_path_prefix: /
+
+# MAS Config
+matrix_authentication_service_enabled: true
+
+# Generate this encryption secret with: `openssl rand -hex 32`
+matrix_authentication_service_config_secrets_encryption: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_AUTHENTICATION_SERVICE_CONFIG_SECRETS_ENCRYPTION', default=undef()) }}"
+
+# Controls the `database.host` configuration setting.
+#matrix_authentication_service_config_database_host: "{{ matrix_synapse_database_host == postgres_connection_hostname }}"
+
+# Element Admin
+matrix_element_admin_enabled: true
+matrix_element_admin_hostname: element-admin.cloudhub.social
+
+# Stats (Prometheus, Grafana)
+prometheus_enabled: true
+prometheus_node_exporter_enabled: true
+prometheus_postgres_exporter_enabled: true
+# Revision 8 is the current published PostgreSQL dashboard. The role default
+# still points at the older revision 7 endpoint.
+prometheus_postgres_exporter_dashboard_urls:
+  - "https://grafana.com/api/dashboards/9628/revisions/8/download"
+prometheus_nginxlog_exporter_enabled: true
+grafana_enabled: true
+
+# Grafana's unified alerting stack includes an Alertmanager. Give the existing
+# Prometheus datasource a stable UID so provisioned alert rules can reference it.
+grafana_provisioning_datasources_datasources:
+  - name: "{{ matrix_server_fqn_matrix }} - Prometheus"
+    uid: matrix-prometheus
+    type: prometheus
+    access: proxy
+    url: "http://{{ prometheus_identifier }}:9090"
+    jsonData:
+      timeInterval: "{{ prometheus_config_global_scrape_interval }}"
+
+# Remove the pre-existing copy which Grafana had assigned a generated UID.
+grafana_provisioning_datasources_deleteDatasources:
+  - name: "{{ matrix_server_fqn_matrix }} - Prometheus"
+    orgId: 1
+
+grafana_provisioning_contact_points_contactPoints:
+  - orgId: 1
+    name: matrix-infrastructure
+    receivers:
+      - uid: matrix-infrastructure-discord
+        type: discord
+        settings:
+          url: "https://discord.com/api/webhooks/1526684666721996981/d9OjxeInlXJlbWtySXlkxkw6OadAH2LTzXAOS0JHUqA2msQ5tOnD8waHZwk5IvUTS6YE"
+        disableResolveMessage: false
+
+grafana_provisioning_notification_policies_policies:
+  - orgId: 1
+    receiver: matrix-infrastructure
+    group_by: [grafana_folder, alertname]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+
+grafana_provisioning_alerts_groups:
+  - orgId: 1
+    name: matrix-infrastructure
+    folder: Matrix Infrastructure
+    interval: 1m
+    rules:
+      - uid: matrix-target-down
+        title: Matrix monitoring target down
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: matrix-prometheus
+            model:
+              datasource: {type: prometheus, uid: matrix-prometheus}
+              editorMode: code
+              expr: min(up)
+              instant: true
+              intervalMs: 60000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            relativeTimeRange: {from: 0, to: 0}
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [1], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: classic_conditions
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: One or more Matrix Prometheus scrape targets are unavailable
+        labels:
+          severity: critical
+        isPaused: false
+
+      - uid: matrix-root-disk-low
+        title: Matrix root disk space low
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: matrix-prometheus
+            model:
+              datasource: {type: prometheus, uid: matrix-prometheus}
+              editorMode: code
+              expr: '100 * node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}'
+              instant: true
+              intervalMs: 60000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            relativeTimeRange: {from: 0, to: 0}
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [15], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: classic_conditions
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: Matrix root filesystem has less than 15 percent free space
+        labels:
+          severity: warning
+        isPaused: false
+
+      - uid: matrix-memory-low
+        title: Matrix available memory low
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 600, to: 0}
+            datasourceUid: matrix-prometheus
+            model:
+              datasource: {type: prometheus, uid: matrix-prometheus}
+              editorMode: code
+              expr: 100 * node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes
+              instant: true
+              intervalMs: 60000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            relativeTimeRange: {from: 0, to: 0}
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [10], type: lt}
+                  operator: {type: and}
+                  query: {params: [A]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              refId: C
+              type: classic_conditions
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: Matrix host has less than 10 percent available memory
+        labels:
+          severity: warning
+        isPaused: false
+
+grafana_default_admin_user: "admin"
+grafana_default_admin_password: "{{ lookup('ansible.builtin.env', 'MDAD_GRAFANA_DEFAULT_ADMIN_PASSWORD', default=undef()) }}"
+
+# Stats (Synapse)
+matrix_synapse_usage_exporter_enabled: true
+
+# Traefik
+traefik_dashboard_enabled: true
+traefik_dashboard_hostname: "traefik.{{ matrix_domain }}"
+traefik_dashboard_basicauth_enabled: true
+traefik_dashboard_basicauth_user: admin
+traefik_dashboard_basicauth_password: "{{ lookup('ansible.builtin.env', 'MDAD_TRAEFIK_DASHBOARD_BASICAUTH_PASSWORD', default=undef()) }}"
+traefik_config_certificatesResolvers_acme_dnsChallenge_enabled: true
+traefik_config_certificatesResolvers_acme_dnsChallenge_provider: "cloudflare"
+traefik_config_certificatesResolvers_acme_dnsChallenge_propagation_delayBeforeChecks: 60
+traefik_config_certificatesResolvers_acme_dnsChallenge_resolvers:
+  - "1.1.1.1:53"
+# Set real Cloudflare API tokens before using DNS-01 ACME for Traefik.
+traefik_environment_variables: |
+  CF_DNS_API_TOKEN={{ lookup('ansible.builtin.env', 'MDAD_CF_DNS_API_TOKEN', default=undef()) }}
+  LEGO_DISABLE_CNAME_SUPPORT=true
+
+# 1. Make sure Traefik compression is on.
+# Traefik v3 supports gzip/br/zstd via compress middleware.
+traefik_config_http_middlewares_compression_enabled: true
+
+# 2. Keep HTTP/3 enabled.
+traefik_config_entrypoint_web_secure_http3_enabled: true
+
+# Trust forwarding headers only from Cloudflare. This lets CrowdSec evaluate
+# the original client IP without accepting spoofed X-Forwarded-For headers
+# from direct connections to the origin.
+matrix_cloudflare_proxy_trusted_ips:
+  - 173.245.48.0/20
+  - 103.21.244.0/22
+  - 103.22.200.0/22
+  - 103.31.4.0/22
+  - 141.101.64.0/18
+  - 108.162.192.0/18
+  - 190.93.240.0/20
+  - 188.114.96.0/20
+  - 197.234.240.0/22
+  - 198.41.128.0/17
+  - 162.158.0.0/15
+  - 104.16.0.0/13
+  - 104.24.0.0/14
+  - 172.64.0.0/13
+  - 131.0.72.0/22
+  - 2400:cb00::/32
+  - 2606:4700::/32
+  - 2803:f800::/32
+  - 2405:b500::/32
+  - 2405:8100::/32
+  - 2a06:98c0::/29
+  - 2c0f:f248::/32
+traefik_config_entrypoint_web_secure_forwardedHeaders_trustedIPs: "{{ matrix_cloudflare_proxy_trusted_ips }}"
+
+# CrowdSec's Traefik plugin blocks LAPI decisions and sends requests through
+# AppSec virtual patching. Failure modes are deliberately open so a CrowdSec
+# restart cannot take Matrix offline.
+traefik_plugin_support_enabled: true
+traefik_configuration_extension_yaml: |
+  experimental:
+    abortOnPluginFailure: true
+    plugins:
+      bouncer:
+        moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+        version: v1.4.5
+traefik_container_extra_arguments_custom:
+  - "--add-host=host.docker.internal:host-gateway"
+traefik_container_additional_volumes_custom:
+  - type: bind
+    src: /etc/crowdsec/bouncers/matrix-traefik.key
+    dst: /etc/traefik/crowdsec/matrix-traefik.key
+    options: ro
+traefik_config_http_middlewares_custom:
+  crowdsec:
+    plugin:
+      bouncer:
+        enabled: true
+        logLevel: INFO
+        crowdsecMode: stream
+        crowdsecLapiScheme: http
+        crowdsecLapiHost: host.docker.internal:8080
+        crowdsecLapiKeyFile: /etc/traefik/crowdsec/matrix-traefik.key
+        updateIntervalSeconds: 60
+        updateMaxFailure: -1
+        streamStartupBlock: false
+        crowdsecAppsecEnabled: true
+        crowdsecAppsecScheme: http
+        crowdsecAppsecHost: host.docker.internal:7422
+        crowdsecAppsecFailureBlock: false
+        crowdsecAppsecUnreachableBlock: false
+        crowdsecAppsecBodyLimit: 1048576
+        crowdsecAppsecUnreadableBodyBlock: false
+        forwardedHeadersTrustedIPs: "{{ matrix_cloudflare_proxy_trusted_ips }}"
+traefik_config_entrypoint_web_secure_http_middlewares_custom:
+  - crowdsec@file
+# Charm companion web-server API routing. Keep this in Traefik's managed
+# provider config so the `/api` path does not depend on ad hoc VPS label edits.
+# `charm.cloudhub.social` was reassigned back to Charm 1.0 (2026-07-09) — Charm
+# 2.0's web build now lives on charm-2-dev.cloudhub.social instead.
+traefik_provider_configuration_extension_yaml: |
+  http:
+    middlewares:
+      matrix-charm-web-server-headers:
+        headers:
+          customResponseHeaders:
+            Strict-Transport-Security: "max-age=31536000; includeSubDomains"
+            X-Content-Type-Options: "nosniff"
+      matrix-charm-web-server-no-cache:
+        headers:
+          customResponseHeaders:
+            Cache-Control: "no-store"
+    routers:
+      matrix-charm-web-server-api:
+        rule: "Host(`charm-2-dev.cloudhub.social`) && PathPrefix(`/api`)"
+        service: matrix-charm-web-server
+        entryPoints: web-secure
+        middlewares:
+          - compression
+          - matrix-charm-web-server-no-cache
+          - matrix-charm-web-server-headers
+        priority: 200
+        tls:
+          certResolver: default
+      matrix-charm-web-server-direct:
+        rule: "Host(`matrix-cloudhub-1.cloudhub.social`) && PathPrefix(`/api`)"
+        service: matrix-charm-web-server
+        entryPoints: web-secure
+        middlewares:
+          - compression
+          - matrix-charm-web-server-no-cache
+          - matrix-charm-web-server-headers
+        priority: 200
+        tls:
+          certResolver: default
+    services:
+      matrix-charm-web-server:
+        loadBalancer:
+          servers:
+            - url: "http://matrix-charm-web-server:8787"
+
+# Element
+matrix_client_element_default_country_code: "CA"
+matrix_client_element_themes_enabled: true
+matrix_client_element_room_directory_servers: ["matrixrooms.info", "matrix.org", "unredacted.org"]
+
+# Sable
+sable_enabled: true
+sable_config_featuredCommunities_servers: ["matrixrooms.info", "matrix.org", "unredacted.org"]
+
+# sable_container_image: "ghcr.io/cloudhub-social/charm:integration"
+sable_hostname: "sable.{{ matrix_domain }}"
+
+sable_configuration_extension_json: '{
+  "defaultHomeserver": 0,
+  "homeserverList": ["cloudhub.social", "matrix.org", "mozilla.org", "unredacted.org", "sable.moe", "kendama.moe"],
+  "allowCustomHomeservers": true,
+  "elementCallUrl": "matrix.cloudhub.social",
+
+  "disableAccountSwitcher": false,
+  "hideUsernamePasswordFields": false,
+
+  "pushNotificationDetails": {
+    "pushNotifyUrl": "https://sygnal.cloudhub.social/_matrix/push/v1/notify",
+    "vapidPublicKey": "BEBdK6VUiqYxcOauFCM1ZB38llgiODAs6pR5EEcC7YBoUh2YvrULagwo5t-Ms0Is0lEmKDhpdUoMiy_i7ArI3oE",
+    "webPushAppID": "social.cloudhub.sable.web"
+  },
+
+  "themeCatalogBaseUrl": "https://raw.githubusercontent.com/SableClient/themes/main/",
+  "themeCatalogApprovedHostPrefixes": ["https://raw.githubusercontent.com/SableClient/themes/"],
+
+  "slidingSync": {
+    "enabled": true
+  },
+
+  "featuredCommunities": {
+    "openAsDefault": false,
+    "spaces": [
+      "#sable:sable.moe",
+      "#charm:cloudhub.social",
+      "#community:matrix.org",
+      "#space:unredacted.org",
+      "#science-space:matrix.org",
+      "#libregaming-games:tchncs.de",
+      "#mathematics-on:matrix.org"
+    ],
+    "rooms": [
+      "#announcements:sable.moe",
+      "#announcements:cloudhub.social",
+      "#freesoftware:matrix.org",
+      "#pcapdroid:matrix.org",
+      "#gentoo:matrix.org",
+      "#PrivSec.dev:arcticfoxes.net",
+      "#disroot:aria-net.org"
+    ],
+    "servers": ["matrixrooms.info", "mozilla.org", "unredacted.org"]
+  },
+
+  "hashRouter": {
+    "enabled": false,
+    "basename": "/"
+  },
+
+  "features": {
+    "encryptedSearch": true,
+    "polls": true
+  }
+}'
+
+# sable_configuration_extension_json: '{
+#   "elementCallUrl": "matrix.cloudhub.social",
+#   "pushNotificationDetails": {
+#   "pushNotifyUrl": "https://sygnal.cloudhub.social/_matrix/push/v1/notify",
+#   "vapidPublicKey": "BEBdK6VUiqYxcOauFCM1ZB38llgiODAs6pR5EEcC7YBoUh2YvrULagwo5t-Ms0Is0lEmKDhpdUoMiy_i7ArI3oE",
+#   "webPushAppID": "social.cloudhub.charm.web",
+#   "unifiedPushAppID": "social.cloudhub.charm.up",
+#   "nativePushAppID": "social.cloudhub.charm.native",
+#   "declarativeWebPushFallback": false
+#   },
+#   "sessionSync": {
+#   "phase1ForegroundResync": true,
+#   "phase2VisibleHeartbeat": true,
+#   "phase3AdaptiveBackoffJitter": true
+#   },
+#   "features": {
+#   "polls": true
+#   },
+#   "slidingSync": {
+#   "enabled": true
+#   }
+#   }'
+
+sable_container_labels_additional_labels_custom:
+  - "traefik.http.middlewares.matrix-client-sable-compress.compress=true"
+  - "traefik.http.middlewares.matrix-client-sable-compress.compress.encodings=br,gzip,zstd"
+
+  # Existing router: add compression while preserving existing security headers
+  - "traefik.http.routers.matrix-client-sable.middlewares=matrix-client-sable-add-response-headers,matrix-client-sable-compress"
+
+  # Immutable cache for Vite assets
+  # - "traefik.http.routers.matrix-client-sable-assets.rule=Host(`charm.cloudhub.social`)&&PathPrefix(`/assets/`)"
+  - "traefik.http.routers.matrix-client-sable-assets.rule=Host(`charm.cloudhub.social`)&&PathPrefix(`/assets/`)"
+  - "traefik.http.routers.matrix-client-sable-assets.entrypoints=web-secure"
+  - "traefik.http.routers.matrix-client-sable-assets.tls=true"
+  - "traefik.http.routers.matrix-client-sable-assets.tls.certResolver=default"
+  - "traefik.http.routers.matrix-client-sable-assets.priority=100"
+  - "traefik.http.routers.matrix-client-sable-assets.service=matrix-client-sable"
+  - "traefik.http.routers.matrix-client-sable-assets.middlewares=matrix-client-sable-compress,matrix-client-sable-cache-assets,matrix-client-sable-add-response-headers"
+  - "traefik.http.middlewares.matrix-client-sable-cache-assets.headers.customresponseheaders.Cache-Control=public,max-age=31536000,immutable"
+
+  # App shell + service worker should always revalidate
+  - "traefik.http.routers.matrix-client-sable-shell.rule=Host(`charm.cloudhub.social`)&&(Path(`/`)||Path(`/index.html`)||Path(`/sw.js`)||Path(`/service-worker.js`)||Path(`/manifest.webmanifest`)||Path(`/manifest.json`))"
+  - "traefik.http.routers.matrix-client-sable-shell.entrypoints=web-secure"
+  - "traefik.http.routers.matrix-client-sable-shell.tls=true"
+  - "traefik.http.routers.matrix-client-sable-shell.tls.certResolver=default"
+  - "traefik.http.routers.matrix-client-sable-shell.priority=90"
+  - "traefik.http.routers.matrix-client-sable-shell.service=matrix-client-sable"
+  - "traefik.http.routers.matrix-client-sable-shell.middlewares=matrix-client-sable-compress,matrix-client-sable-cache-shell,matrix-client-sable-add-response-headers"
+  - "traefik.http.middlewares.matrix-client-sable-cache-shell.headers.customresponseheaders.Cache-Control=no-cache,must-revalidate"
+
+# ## Sygnal (Sable Push Notifications)
+matrix_sygnal_enabled: true
+matrix_sygnal_hostname: sygnal.cloudhub.social
+matrix_sygnal_configuration_extension_yaml: |
+  metrics:
+    sentry:
+      enabled: true
+      dsn: "https://c3f1f93bf3d8868347d2cfa84f44a1ed@o4511094843244544.ingest.de.sentry.io/4511094868738128"
+  log:
+    setup:
+      root:
+        level: "INFO"
+
+# You need at least 1 app defined.
+# The configuration below is incomplete. Read more below.
+
+matrix_sygnal_apps:
+  social.cloudhub.sable.web:
+    type: webpush
+    vapid_private_key: "/data/sygnal_private_key.pem"
+    vapid_contact_email: "admin@cloudhub.social"
+  # Enable after manually creating the Apple Developer APNs key for
+  # the charm.cloudhub.social App ID.
+  # sygnal.cloudhub.social:
+  #   type: apns
+  #   keyfile: "/data/sygnal.cloudhub.social.apns.p8"
+  #   key_id: "APPLE_APNS_KEY_ID"
+  #   team_id: "APPLE_TEAM_ID"
+  #   topic: "charm.cloudhub.social"
+  #   platform: sandbox
+  social.cloudhub.charm.web:
+    type: webpush
+    vapid_private_key: "/data/sygnal_private_key.pem"
+    vapid_contact_email: "admin@cloudhub.social"
+  # Enable after manually creating the Apple Developer APNs key for
+  # the charm.cloudhub.social App ID.
+  # sygnal.cloudhub.social:
+  #   type: apns
+  #   keyfile: "/data/sygnal.cloudhub.social.apns.p8"
+  #   key_id: "APPLE_APNS_KEY_ID"
+  #   team_id: "APPLE_TEAM_ID"
+  #   topic: "charm.cloudhub.social"
+  #   platform: sandbox
+
+  # UnifiedPush (Android external distributor) does NOT need a Sygnal app entry.
+  # There is no `http` pushkin type in Sygnal v0.15.1 (only apns/gcm/webpush exist —
+  # adding `type: http` crashes the service with "No module named 'sygnal.httppushkin'").
+  # The UnifiedPush distributor URL the client registers with Synapse's `set_pusher`
+  # (kind: "http") *is* the push gateway per the Matrix Push Gateway API spec —
+  # Synapse posts to it directly, bypassing Sygnal entirely.
+
+  social.cloudhub.charm.android:
+    type: gcm
+    api_version: v1
+    project_id: sygnal-matrix
+    service_account_file: /data/sygnal-matrix-f2f19c01577b.json
+
+  # APNs placeholder for Charm 2.0 iOS — uncomment and fill in when Apple Developer
+  # account has provisioned the cert/key. Steps:
+  #   1. Create an APNs Auth Key (.p8) in Apple Developer Portal for the Charm App ID
+  #   2. Add an aux_file_definitions entry to install the .p8 at matrix_sygnal_data_path
+  #   3. Uncomment this block and fill in key_id, team_id, topic
+  # social.cloudhub.charm.ios:
+  #   type: apns
+  #   keyfile: "/data/charm.cloudhub.social.apns.p8"
+  #   key_id: REPLACE_WITH_APPLE_KEY_ID
+  #   team_id: REPLACE_WITH_APPLE_TEAM_ID
+  #   topic: social.cloudhub.charm
+  #   platform: sandbox   # change to production when going live
+
+# CrowdSec's official repository is installed on the host. Keep the detection
+# engine and nftables remediation component part of the playbook-managed package set.
+aux_package_definitions_custom:
+  - crowdsec
+  - crowdsec-firewall-bouncer-nftables
+
+aux_file_definitions:
+  - dest: "{{ matrix_sygnal_data_path }}/sygnal_private_key.pem"
+    content: "{{ lookup('ansible.builtin.env', 'MDAD_SYGNAL_VAPID_PRIVATE_PEM', default=undef()) }}"
+    mode: "0600"
+    owner: "{{ matrix_user_name }}"
+    group: "{{ matrix_group_name }}"
+
+  # Firebase Admin SDK service-account credentials for social.cloudhub.charm.android's
+  # FCM v1 pushkin.
+  - dest: "{{ matrix_sygnal_data_path }}/sygnal-matrix-f2f19c01577b.json"
+    content: "{{ lookup('ansible.builtin.env', 'MDAD_FIREBASE_SERVICE_ACCOUNT_JSON', default=undef()) }}"
+    mode: "0600"
+    owner: "{{ matrix_user_name }}"
+    group: "{{ matrix_group_name }}"
+
+  # Enable after manually creating and downloading the Apple Developer APNs
+  # .p8 key. Keep the in-container path in matrix_sygnal_apps as /data/...
+  # - dest: "{{ matrix_sygnal_data_path }}/sygnal.cloudhub.social.apns.p8"
+  #   content: |
+  #     -----BEGIN PRIVATE KEY-----
+  #     PASTE_APNS_P8_CONTENT_HERE
+  #     -----END PRIVATE KEY-----
+  #   mode: "0600"
+  #   owner: "{{ matrix_user_name }}"
+  #   group: "{{ matrix_group_name }}"
+
+  # Keep old deployment images from accumulating indefinitely. This intentionally
+  # prunes images only; volumes and stopped containers are left untouched.
+  - dest: /etc/systemd/system/matrix-docker-image-prune.service
+    content: |
+      [Unit]
+      Description=Prune unused Matrix Docker images older than seven days
+      Requires=docker.service
+      After=docker.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/bin/docker image prune --all --force --filter until=168h
+      Nice=10
+      IOSchedulingClass=idle
+
+  - dest: /etc/systemd/system/matrix-docker-image-prune.timer
+    content: |
+      [Unit]
+      Description=Weekly Matrix Docker image pruning
+
+      [Timer]
+      OnCalendar=Sun *-*-* 04:30:00
+      RandomizedDelaySec=2h
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+devture_systemd_service_manager_services_list_additional:
+  - name: matrix-docker-image-prune.timer
+    priority: 9000
+    groups: ['maintenance']
+
+## ntfy (UnifiedPush distributor for Charm 2.0 Android)
+# Default hostname is ntfy.{{ matrix_domain }} (ntfy_hostname: "{{ matrix_server_fqn_ntfy }}"
+# in group_vars/matrix_servers), consistent with the sygnal./sable./admin. subdomain
+# convention already used on this server.
+ntfy_enabled: true
+
+# Appservice Double Puppet
+matrix_appservice_double_puppet_enabled: true
+
+# iMessage (RustPush)
+# Each user completes the bridge bot login with a hardware key extracted from a Mac.
+matrix_rustpush_bridge_enabled: true
+
+# S3 Storage (Digital Ocean)
+matrix_synapse_ext_synapse_s3_storage_provider_enabled: true
+
+matrix_synapse_ext_synapse_s3_storage_provider_config_bucket: matrix-cloudhub-social-tor1
+matrix_synapse_ext_synapse_s3_storage_provider_config_region_name: tor1
+matrix_synapse_ext_synapse_s3_storage_provider_config_endpoint_url: https://matrix-cloudhub-social-tor1.tor1.digitaloceanspaces.com
+matrix_synapse_ext_synapse_s3_storage_provider_config_storage_class: STANDARD
+matrix_synapse_ext_synapse_s3_storage_provider_config_access_key_id: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_SYNAPSE_EXT_SYNAPSE_S3_STORAGE_PROVIDER_CONFIG_ACCESS_KEY_ID', default=undef()) }}"
+matrix_synapse_ext_synapse_s3_storage_provider_config_secret_access_key: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_SYNAPSE_EXT_SYNAPSE_S3_STORAGE_PROVIDER_CONFIG_SECRET_ACCESS_KEY', default=undef()) }}"
+
+# Exim Config
+exim_relay_dkim_selector: matrix
+exim_relay_dkim_privkey_contents: "{{ lookup('ansible.builtin.env', 'MDAD_EXIM_RELAY_DKIM_PRIVKEY_CONTENTS', default=undef()) }}"
+
+## Bridges
+matrix_bridges_encryption_enabled: true
+matrix_bridges_encryption_default: true
+matrix_bridges_msc4190_enabled: true
+matrix_bridges_self_sign_enabled: true
+matrix_bridges_relay_enabled: true
+
+# Bluesky
+matrix_mautrix_bluesky_enabled: true
+
+# Discord (Mautrix - Puppet)
+# Using CloudHub-Social fork: https://github.com/CloudHub-Social/discord
+matrix_mautrix_discord_enabled: true
+matrix_mautrix_discord_container_image: "ghcr.io/cloudhub-social/discord:main"
+matrix_mautrix_discord_configuration_extension_yaml: |
+  logging:
+    min_level: debug
+  bridge:
+    sync_direct_chat_list: true
+    # Presence/status syncing. All four are OFF for now: forwarding presence
+    # to Discord (opcode 3) and subscribing to receive Discord presence (opcode 14)
+    # are self-bot behaviors that can get a user token flagged (close code 4004).
+    # "presence" = online/idle/dnd state; "status" = custom status text.
+    sync_matrix_presence_to_discord: true
+    sync_matrix_status_to_discord: true
+    sync_discord_presence_to_matrix: true
+    sync_discord_status_to_matrix: true
+    # On-demand subscription settings (only apply when sync_discord_presence_to_matrix
+    # is enabled; inert while it is false). false = subscribe guilds on demand.
+    discord_presence_subscribe_all: false
+    discord_presence_active_limit: 10
+    encryption:
+      self_sign: true
+    backfill:
+        # Limits for forward backfilling.
+        forward_limits:
+            # Initial backfill (when creating portal). 0 means backfill is disabled.
+            # A special unlimited value is not supported, you must set a limit. Initial backfill will
+            # fetch all messages first before backfilling anything, so high limits can take a lot of time.
+            initial:
+                dm: 100
+                channel: 100
+                thread: 100
+            # Missed message backfill (on startup).
+            # 0 means backfill is disabled, -1 means fetch all messages since last bridged message.
+            # When using unlimited backfill (-1), messages are backfilled as they are fetched.
+            # With limits, all messages up to the limit are fetched first and backfilled afterwards.
+            missed:
+                dm: -1
+                channel: -1
+                thread: -1
+        # Maximum members in a guild to enable backfilling. Set to -1 to disable limit.
+        # This can be used as a rough heuristic to disable backfilling in channels that are too active.
+        # Currently only applies to missed message backfill.
+        max_guild_members: -1
+
+# Discord (Appservice - Bot)
+matrix_appservice_discord_enabled: false
+matrix_appservice_discord_client_id: "1472289244809662618"
+matrix_appservice_discord_bot_token: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_APPSERVICE_DISCORD_BOT_TOKEN', default=undef()) }}"
+matrix_appservice_discord_bridge_enableSelfServiceBridging: true
+matrix_appservice_discord_auth_usePrivilegedIntents: true
+
+# Instagram
+matrix_mautrix_meta_instagram_enabled: true
+matrix_mautrix_meta_instagram_configuration_extension_yaml: |
+  matrix:
+    sync_direct_chat_list: true
+
+# Messenger
+matrix_mautrix_meta_messenger_enabled: true
+matrix_mautrix_meta_messenger_configuration_extension_yaml: |
+  matrix:
+    sync_direct_chat_list: true
+
+# Twitter
+matrix_mautrix_twitter_enabled: true
+
+# Signal
+matrix_mautrix_signal_enabled: true
+matrix_mautrix_signal_configuration_extension_yaml: |
+  matrix:
+    sync_direct_chat_list: true
+
+  # bridge:
+  #   relay:
+  #     default_relays: ['e6a52cb0-af1b-4edf-a23a-a1e74ae98751']
+
+# IRC/Heisenbridge
+matrix_heisenbridge_enabled: true
+matrix_heisenbridge_owner: "@admin:{{ matrix_domain }}"
+matrix_heisenbridge_hostname: heisenbridge.cloudhub.social
+matrix_heisenbridge_path_prefix: /
+matrix_heisenbridge_identd_enabled: true
+
+# LinkedIn
+# matrix_beeper_linkedin_enabled: true
+
+# Steam
+matrix_steam_bridge_enabled: true
+
+# Whatsapp
+matrix_mautrix_whatsapp_enabled: true
+
+## Bots
+
+# Baibot
+matrix_bot_baibot_enabled: true
+# matrix_bot_baibot_config_user_password: "*0*6WS9%N4i*3&qomMwd#HrsklLOz1FNo!^@gmm%cOvvO!oGMykj%FYo9fYwlbym"
+
+matrix_bot_baibot_config_user_access_token: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT_BAIBOT_CONFIG_USER_ACCESS_TOKEN', default=undef()) }}"
+matrix_bot_baibot_config_user_device_id: "BAIBOT"
+
+matrix_bot_baibot_config_user_encryption_recovery_passphrase: "59YDit3$K*!KJFT2WPANRe!#^CYF3R%5qM@QJJWNbkG9SJq5%skRf5mWL!O0dWvc"
+matrix_bot_baibot_config_persistence_session_encryption_key: REMOVED_BY_INCIDENT_RESPONSE
+matrix_bot_baibot_config_persistence_config_encryption_key: REMOVED_BY_INCIDENT_RESPONSE
+
+# Make yourself an admin, unless matrix_admin already covers this.
+matrix_bot_baibot_config_access_admin_patterns:
+  - "@evie:{{ matrix_domain }}"
+
+# Optional: restrict usage to local users.
+matrix_bot_baibot_config_initial_global_config_user_patterns:
+  - "@*:{{ matrix_domain }}"
+
+# OpenAI text agent.
+matrix_bot_baibot_config_agents_static_definitions_openai_enabled: true
+matrix_bot_baibot_config_agents_static_definitions_openai_config_api_key: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT_BAIBOT_CONFIG_AGENTS_STATIC_DEFINITIONS_OPENAI_CONFIG_API_KEY', default=undef()) }}"
+matrix_bot_baibot_config_agents_static_definitions_openai_config_text_generation_model_id: gpt-5.5
+
+# Use the OpenAI agent globally.
+matrix_bot_baibot_config_initial_global_config_handler_catch_all: static/openai
+matrix_bot_baibot_config_initial_global_config_handler_text_generation: static/openai
+matrix_bot_baibot_config_initial_global_config_handler_text_to_speech: null
+matrix_bot_baibot_config_initial_global_config_handler_speech_to_text: null
+matrix_bot_baibot_config_initial_global_config_handler_image_generation: null
+
+# OpenAI built-in tools
+matrix_bot_baibot_config_agents_static_definitions_openai_config_text_generation_tools_web_search: true
+matrix_bot_baibot_config_agents_static_definitions_openai_config_text_generation_tools_code_interpreter: true
+
+# Reminders
+matrix_bot_matrix_reminder_bot_enabled: false
+matrix_bot_matrix_reminder_bot_matrix_user_password: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT_MATRIX_REMINDER_BOT_MATRIX_USER_PASSWORD', default=undef()) }}"
+matrix_bot_matrix_reminder_bot_reminders_timezone: America/Toronto
+
+# Maubot
+matrix_bot_maubot_enabled: true
+matrix_bot_maubot_initial_password: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT_MAUBOT_INITIAL_PASSWORD', default=undef()) }}"
+matrix_bot_maubot_admins:
+  - admin: "{{ lookup('ansible.builtin.env', 'MDAD_TRAEFIK_DASHBOARD_BASICAUTH_PASSWORD', default=undef()) }}"
+matrix_bot_maubot_hostname: maubot.cloudhub.social
+matrix_bot_maubot_container_labels_management_traefik_rule: "Host(`{{ matrix_bot_maubot_hostname }}`) && PathPrefix(`{{ matrix_bot_maubot_path_prefix }}`)"
+matrix_bot_maubot_path_prefix: /
+
+# Draupnir
+matrix_bot_draupnir_enabled: true
+matrix_bot_draupnir_password: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT_DRAUPNIR_PASSWORD', default=undef()) }}"
+matrix_bot_draupnir_login_native: true
+matrix_bot_draupnir_config_managementRoom: "!YyPfjRJ9qjvVFPGIyJX2E4l_dSO7nrdQXFSCKe5cBeQ"
+# matrix_bot_draupnir_config_experimentalRustCrypto: true
+# matrix_bot_draupnir_config_accessToken: "REMOVED_BY_INCIDENT_RESPONSE"
+matrix_bot_draupnir_config_web_abuseReporting: true
+matrix_bot_draupnir_config_web_synapseHTTPAntispam_enabled: true
+matrix_bot_draupnir_admin_api_enabled: true
+matrix_bot_draepnir_configuration_extension_yaml: |
+  health:
+    sentry:
+      enabled: true
+      dsn: "https://ca6393099230f77a23ca7a7e68690fc0@o4511094843244544.ingest.de.sentry.io/4511094877519952"
+
+# Hookshot
+matrix_hookshot_enabled: true
+matrix_hookshot_github_enabled: false
+matrix_hookshot_gitlab_enabled: false
+matrix_hookshot_figma_enabled: false
+matrix_hookshot_jira_enabled: false
+
+## Matrix RTC Stack
+matrix_rtc_enabled: true
+
+# Keep LiveKit signaling behind Cloudflare, but move TURN onto a dedicated
+# DNS-only hostname because the media and relay ports are not HTTP(S)-proxyable.
+livekit_server_config_turn_domain: turn.cloudhub.social

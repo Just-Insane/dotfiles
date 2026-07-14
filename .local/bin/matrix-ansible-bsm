@@ -2,6 +2,8 @@
 set -euo pipefail
 
 REPO=${MATRIX_ANSIBLE_REPO:-$HOME/git/matrix-docker-ansible-deploy}
+CONFIG_ROOT=${MDAD_CONFIG_ROOT:-$HOME/.config/mdad/matrix.cloudhub.social}
+BSM_PROJECT_ID=${MDAD_BSM_PROJECT_ID:-7d21a45b-e63a-4177-9020-b48701662eda}
 KEYCHAIN_ACCOUNT=${BWS_KEYCHAIN_ACCOUNT:-$USER}
 KEYCHAIN_SERVICE=${BWS_KEYCHAIN_SERVICE:-bws-mcp-mac-studio-access-token}
 
@@ -13,9 +15,10 @@ Examples:
   matrix-ansible-bsm -- just install-all
   matrix-ansible-bsm -- ansible-playbook -i inventory/hosts setup.yml --syntax-check
 
-The ignored Matrix host-vars file and VAPID keypair are read from Bitwarden
-Secrets Manager, materialized with mode 0600 only while COMMAND runs, and
-removed on exit or interruption.
+The normal Matrix vars.yml is a tracked, secret-free file. This wrapper reads
+only the allowlisted values from the MDAD Bitwarden Secrets Manager project,
+injects them into COMMAND's environment, and removes them from its own
+environment on exit. No secret or private-key file is materialized.
 EOF
 }
 
@@ -31,15 +34,15 @@ command -v bws >/dev/null || { echo 'bws is required' >&2; exit 1; }
 command -v jq >/dev/null || { echo 'jq is required' >&2; exit 1; }
 [[ -d "$REPO/.git" ]] || { echo "Matrix playbook repo not found: $REPO" >&2; exit 1; }
 
+vars_source="$CONFIG_ROOT/vars.yml"
+secret_keys_file="$CONFIG_ROOT/secret-keys.txt"
 vars_file="$REPO/inventory/host_vars/matrix.cloudhub.social/vars.yml"
-vapid_private="$REPO/vapid_private.pem"
-vapid_public="$REPO/vapid_public.pem"
-for target in "$vars_file" "$vapid_private" "$vapid_public"; do
-  [[ ! -e "$target" ]] || {
-    echo "refusing to overwrite existing materialized secret: $target" >&2
-    exit 1
-  }
-done
+[[ -f "$vars_source" ]] || { echo "tracked MDAD vars missing: $vars_source" >&2; exit 1; }
+[[ -f "$secret_keys_file" ]] || { echo "MDAD secret allowlist missing: $secret_keys_file" >&2; exit 1; }
+[[ -e "$vars_file" && "$vars_file" -ef "$vars_source" ]] || {
+  echo "inventory vars must link to tracked source: $vars_source" >&2
+  exit 1
+}
 
 lock_dir="${TMPDIR:-/tmp}/matrix-ansible-bsm.$UID.lock"
 mkdir "$lock_dir" 2>/dev/null || {
@@ -47,13 +50,16 @@ mkdir "$lock_dir" 2>/dev/null || {
   exit 1
 }
 
+injected_keys=()
 cleanup() {
-  rm -f "$vars_file" "$vapid_private" "$vapid_public"
+  local key
+  for key in "${injected_keys[@]}"; do
+    unset "$key"
+  done
   rmdir "$lock_dir" 2>/dev/null || true
   unset BWS_ACCESS_TOKEN
 }
 trap cleanup EXIT HUP INT TERM
-umask 077
 
 if [[ -z ${BWS_ACCESS_TOKEN:-} ]]; then
   command -v security >/dev/null || {
@@ -65,24 +71,24 @@ if [[ -z ${BWS_ACCESS_TOKEN:-} ]]; then
     -a "$KEYCHAIN_ACCOUNT" -s "$KEYCHAIN_SERVICE" -w)
 fi
 
-secret_value() {
-  local key=$1 id
-  id=$(bws secret list | jq -r --arg key "$key" \
-    '.[] | select(.key == $key) | .id' | head -1)
-  [[ -n "$id" ]] || { echo "BSM secret not found: $key" >&2; return 1; }
-  bws secret get "$id" | jq -er '.value'
-}
-
-mkdir -p "$(dirname "$vars_file")"
-tmp_vars="$lock_dir/vars.yml"
-secret_value MATRIX_ANSIBLE_VARS_YML_GZIP_BASE64 \
-  | openssl base64 -d -A \
-  | gzip -dc >"$tmp_vars"
-secret_value MATRIX_SYGNAL_VAPID_PRIVATE_PEM >"$lock_dir/vapid_private.pem"
-secret_value MATRIX_SYGNAL_VAPID_PUBLIC_PEM >"$lock_dir/vapid_public.pem"
-chmod 0600 "$tmp_vars" "$lock_dir/vapid_private.pem" "$lock_dir/vapid_public.pem"
-mv "$tmp_vars" "$vars_file"
-mv "$lock_dir/vapid_private.pem" "$vapid_private"
-mv "$lock_dir/vapid_public.pem" "$vapid_public"
+secret_index=$(bws secret list)
+while IFS= read -r key || [[ -n "$key" ]]; do
+  [[ -n "$key" && "$key" != \#* ]] || continue
+  [[ "$key" =~ ^[A-Z][A-Z0-9_]*$ ]] || {
+    echo "invalid environment key in $secret_keys_file: $key" >&2
+    exit 1
+  }
+  id=$(jq -r --arg key "$key" --arg project "$BSM_PROJECT_ID" \
+    '[.[] | select(.key == $key and .projectId == $project) | .id] | if length == 1 then .[0] else empty end' \
+    <<<"$secret_index")
+  [[ -n "$id" ]] || { echo "missing or duplicate MDAD BSM secret: $key" >&2; exit 1; }
+  # The sentinel preserves trailing newlines in PEM/JSON values through command substitution.
+  raw_value="$(bws secret get "$id" | jq -er '.value'; printf '\001')"
+  value=${raw_value%$'\001'}
+  export "$key=$value"
+  injected_keys+=("$key")
+  unset raw_value value
+done <"$secret_keys_file"
+unset secret_index id key
 
 (cd "$REPO" && "$@")
