@@ -87,7 +87,7 @@ while IFS= read -r key || [[ -n "$key" ]]; do
     <<<"$secret_index")
   [[ -n "$id" ]] || { echo "missing or duplicate MDAD BSM secret: $key" >&2; exit 1; }
   # The sentinel preserves trailing newlines in PEM/JSON values through command substitution.
-  raw_value="$(bws secret get "$id" | jq -er '.value'; printf '\001')"
+  raw_value="$(bws secret get "$id" | jq -erj '.value'; printf '\001')"
   value=${raw_value%$'\001'}
   export "$key=$value"
   injected_keys+=("$key")

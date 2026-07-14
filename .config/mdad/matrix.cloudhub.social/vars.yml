@@ -159,8 +159,6 @@ matrix_synapse_experimental_features_msc4354_enabled: false
 # matrix_synapse_enable_registration: true
 # matrix_synapse_registration_requires_token: true
 # matrix_synapse_enable_registration_captcha: true
-# matrix_synapse_recaptcha_public_key: "6Lfbp2ssAAAAAMy30i_aL9qhtCmUj6aUTLpVQiLM"
-# matrix_synapse_recaptcha_private_key: "REMOVED_BY_INCIDENT_RESPONSE"
 
 matrix_synapse_trusted_key_servers:
   - server_name: "matrix.org"
@@ -890,11 +888,11 @@ matrix_bot_baibot_enabled: true
 # matrix_bot_baibot_config_user_password: "*0*6WS9%N4i*3&qomMwd#HrsklLOz1FNo!^@gmm%cOvvO!oGMykj%FYo9fYwlbym"
 
 matrix_bot_baibot_config_user_access_token: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT_BAIBOT_CONFIG_USER_ACCESS_TOKEN', default=undef()) }}"
-matrix_bot_baibot_config_user_device_id: "BAIBOT"
+matrix_bot_baibot_config_user_device_id: "BAIBOT-20260714"
 
 matrix_bot_baibot_config_user_encryption_recovery_passphrase: "59YDit3$K*!KJFT2WPANRe!#^CYF3R%5qM@QJJWNbkG9SJq5%skRf5mWL!O0dWvc"
-matrix_bot_baibot_config_persistence_session_encryption_key: REMOVED_BY_INCIDENT_RESPONSE
-matrix_bot_baibot_config_persistence_config_encryption_key: REMOVED_BY_INCIDENT_RESPONSE
+matrix_bot_baibot_config_persistence_session_encryption_key: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT_BAIBOT_CONFIG_PERSISTENCE_SESSION_ENCRYPTION_KEY', default=undef()) }}"
+matrix_bot_baibot_config_persistence_config_encryption_key: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT_BAIBOT_CONFIG_PERSISTENCE_CONFIG_ENCRYPTION_KEY', default=undef()) }}"
 
 # Make yourself an admin, unless matrix_admin already covers this.
 matrix_bot_baibot_config_access_admin_patterns:
@@ -940,7 +938,6 @@ matrix_bot_draupnir_password: "{{ lookup('ansible.builtin.env', 'MDAD_MATRIX_BOT
 matrix_bot_draupnir_login_native: true
 matrix_bot_draupnir_config_managementRoom: "!YyPfjRJ9qjvVFPGIyJX2E4l_dSO7nrdQXFSCKe5cBeQ"
 # matrix_bot_draupnir_config_experimentalRustCrypto: true
-# matrix_bot_draupnir_config_accessToken: "REMOVED_BY_INCIDENT_RESPONSE"
 matrix_bot_draupnir_config_web_abuseReporting: true
 matrix_bot_draupnir_config_web_synapseHTTPAntispam_enabled: true
 matrix_bot_draupnir_admin_api_enabled: true

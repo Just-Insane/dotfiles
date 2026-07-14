@@ -29,3 +29,13 @@ matrix-ansible-bsm -- ansible-playbook -i inventory/hosts setup.yml --syntax-che
 Adding or rotating a secret is a deliberate BSM operation: update the object in
 the `MDAD` project, add its key to `secret-keys.txt` when new, and reference it
 from `vars.yml` with `lookup('ansible.builtin.env', ..., default=undef())`.
+
+Before pushing dotfiles, scan the complete Git history:
+
+```sh
+gitleaks git ~/.cfg --log-opts='--all' --redact=100
+```
+
+The GitHub workflow performs the same class of scan on every push and pull
+request. Never dismiss a finding until the candidate value is confirmed to be
+non-sensitive.
