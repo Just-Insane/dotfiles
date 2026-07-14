@@ -1,0 +1,8 @@
+{
+  "name": "sentry",
+  "transport": "stdio",
+  "description": "Sentry issues, events, traces, releases, projects, and organization management.",
+  "command": "/Users/evie/.local/bin/sentry-mcp-remote",
+  "args": [],
+  "session_mode": "stateful"
+}

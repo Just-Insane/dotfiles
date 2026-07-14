@@ -14,6 +14,7 @@ ALLOWED_KEYS = {"name", "description", "included_tools", "included_servers", "ex
 CHANGE_ACTION = re.compile(
     r"(?:^|[_-])(add|assign|attach|create|delete|detach|edit|execute|fork|invite|join|leave|merge|modify|power|push|reboot|redact|remove|replay|restart|set|unsafe|update|upload|write)(?:$|[_-])"
 )
+READ_NAME_EXCEPTIONS = {"matrix-server__replay-queue"}
 
 
 def available_tools(db_path: Path) -> set[str]:
@@ -68,7 +69,12 @@ def main() -> int:
         if not (path.stem.endswith("-change") or path.stem == "approved-actions"):
             if profile.get("included_servers"):
                 errors.append(f"{path.name}: read profiles must cherry-pick tools, not whole servers")
-            risky = [tool for tool in tools if CHANGE_ACTION.search(tool.split("__", 1)[-1])]
+            risky = [
+                tool
+                for tool in tools
+                if tool not in READ_NAME_EXCEPTIONS
+                and CHANGE_ACTION.search(tool.split("__", 1)[-1])
+            ]
             if risky:
                 errors.append(f"{path.name}: change-capable names in read profile: {risky}")
         malformed = [tool for tool in tools if not re.fullmatch(r"[^_]+(?:[-\w]*)?__[-\w]+", tool)]

@@ -23,5 +23,10 @@ for profile in "$base"/mcpjungle-groups/*.json; do
       fi
       ;;
   esac
-  mcpjungle create group --registry "$registry" --conf "$profile"
+  group_name=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["name"])' "$profile")
+  if mcpjungle get group --registry "$registry" "$group_name" >/dev/null 2>&1; then
+    mcpjungle update group --registry "$registry" --conf "$profile"
+  else
+    mcpjungle create group --registry "$registry" --conf "$profile"
+  fi
 done

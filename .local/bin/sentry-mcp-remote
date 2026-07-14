@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+sentry_token=$(/usr/bin/security find-generic-password -w -a "$USER" -s mcp-sentry-access-token)
+export SENTRY_ACCESS_TOKEN="$sentry_token"
+
+exec /Users/evie/.nvm/versions/node/v24.14.1/bin/node \
+  /Users/evie/.local/share/mcp-relay/node_modules/mcp-remote/dist/proxy.js \
+  https://mcp.sentry.dev/mcp

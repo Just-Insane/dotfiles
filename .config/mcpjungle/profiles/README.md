@@ -9,8 +9,8 @@ credentials, registry databases, logs, or AI-client configs containing secrets.
 
 | Profile | Intended use | Deliberately absent |
 |---|---|---|
-| `read-mostly` | Always-on daily route: reads, research, and isolated browser work | Credentials, host commands, external writes and destructive actions |
-| `approved-actions` | Routine writes and destructive actions; clients must prompt for every call | Bitwarden retrieval, SSH commands, tmux commands |
+| `read-mostly` | Always-on daily route: non-sensitive reads, research, and isolated browser inspection | Secrets, host commands, external writes and destructive actions |
+| `approved-actions` | Sensitive reads, routine writes, host control, and destructive actions; clients must prompt for every call | Nothing intentionally excluded; upstream credentials still define scope |
 | `charm-dev` | GitHub intelligence and isolated browser testing | Personal data, infrastructure, GitHub writes |
 | `charm-maintenance` | Issue, PR, Actions, release, and advisory triage | Comments, edits, merge, admin, workflow dispatch |
 | `charm-maintenance-change` | Short-lived approved collaboration actions | Merge, delete, admin, workflow dispatch |
@@ -25,6 +25,19 @@ for ordinary solo use.
 MCPJungle groups authorize tool names, not arguments or resource identities.
 Repository, room, calendar, and vault-path boundaries require separate upstream
 credentials or independently registered servers with server-side enforcement.
+
+The operational pair is generated from the live MCPJungle registry by
+`generate_operational_groups.py`. It classifies every enabled tool, rejects
+unknown servers, and verifies that the groups have no overlap and no gaps. The
+current inventory covers Bitwarden, Cloudflare, D2, DigitalOcean, Fantastical,
+GitHub, Hetzner, Last.fm, macOS services, Matrix, Obsidian, OmniFocus,
+OpenFeature, Plaud, Playwright, Sentry, SSH, and tmux.
+
+Sensitive reads are deliberately routed through `approved-actions`. This
+includes Bitwarden vault contents, SSH file transfer and execution, tmux
+session mutation, Matrix actions, and any multiplexed tool that can write based
+on its arguments. Bitwarden exposes its complete surface, including destructive
+operations, but only its status check is available automatically.
 
 ## Validate
 
@@ -59,9 +72,11 @@ The Cloudflare MCP Portal endpoints are:
 - `https://mcp-actions.gauthier.id/mcp?codemode=search_and_execute`
 
 Both portals use Code Mode and the `mcp-relay-service-token-only` Access
-policy. The read portal contains only the `read-mostly` MCPJungle group. The
-actions portal contains only the `approved-actions` group, including destructive
-tools. Clients must treat every call to the actions portal as approval-gated.
+policy. The read portal contains the `read-mostly` MCPJungle group plus three
+Home Assistant reads. The actions portal contains the `approved-actions` group
+plus 21 Home Assistant controls, including destructive tools. The current split
+is 194 automatic tools and 268 approval-gated tools. Clients must treat every
+call to the actions portal as approval-gated.
 
 `~/.local/bin/mcp-portal-relay read|actions` is the secret-safe stdio adapter
 for local clients. It retrieves the Cloudflare Access service-token values from
@@ -73,3 +88,9 @@ Codex uses `default_tools_approval_mode = "auto"` for the read adapter and
 Claude Desktop/Cowork, and VS Code use the same two adapters; their global or
 session permission mode must remain approval-oriented rather than bypass or
 auto-accept mode.
+
+Service MCPs must not also be registered directly in clients. Sentry,
+Cloudflare, GitHub, and the other remote services enter through MCPJungle and
+Cloudflare so calls share one policy and audit path. Local product runtime
+plumbing remains local by design: Codex's Node/browser/computer-use bridges and
+Claude's built-in Design MCP do not provide a parallel route to these services.
