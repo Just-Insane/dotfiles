@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+export TUNNEL_SERVICE_TOKEN_ID
+export TUNNEL_SERVICE_TOKEN_SECRET
+TUNNEL_SERVICE_TOKEN_ID=$(/usr/bin/security find-generic-password \
+  -a "$USER" -s personal-systems-mac-vault-mcp-read-access-client-id -w)
+TUNNEL_SERVICE_TOKEN_SECRET=$(/usr/bin/security find-generic-password \
+  -a "$USER" -s personal-systems-mac-vault-mcp-read-access-client-secret -w)
+
+exec /opt/homebrew/bin/cloudflared access tcp \
+  --hostname vault-api-control-plane.gauthier.id \
+  --url 127.0.0.1:18211

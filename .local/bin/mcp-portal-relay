@@ -6,9 +6,19 @@ portal=${1:?usage: mcp-portal-relay read|actions}
 case "$portal" in
   read)
     url='https://mcp-read.gauthier.id/mcp?codemode=search_and_execute'
+    export MCP_CF_ACCESS_CLIENT_ID MCP_CF_ACCESS_CLIENT_SECRET
+    MCP_CF_ACCESS_CLIENT_ID=$("$HOME/.local/bin/mcp-read-vault-secret" \
+      MCP_READ_CLOUDFLARE_ACCESS_CLIENT_ID)
+    MCP_CF_ACCESS_CLIENT_SECRET=$("$HOME/.local/bin/mcp-read-vault-secret" \
+      MCP_READ_CLOUDFLARE_ACCESS_CLIENT_SECRET)
     ;;
   actions)
     url='https://mcp-actions.gauthier.id/mcp?codemode=search_and_execute'
+    export MCP_CF_ACCESS_CLIENT_ID MCP_CF_ACCESS_CLIENT_SECRET
+    MCP_CF_ACCESS_CLIENT_ID=$("$HOME/.local/bin/bws-runtime-secret" \
+      MCP_CLOUDFLARE_ACCESS_CLIENT_ID)
+    MCP_CF_ACCESS_CLIENT_SECRET=$("$HOME/.local/bin/bws-runtime-secret" \
+      MCP_CLOUDFLARE_ACCESS_CLIENT_SECRET)
     ;;
   *)
     echo "unknown portal: $portal" >&2
@@ -16,11 +26,8 @@ case "$portal" in
     ;;
 esac
 
-cf_id=$(/usr/bin/security find-generic-password -w -a "$USER" -s mcp-cloudflare-access-client-id)
-cf_secret=$(/usr/bin/security find-generic-password -w -a "$USER" -s mcp-cloudflare-access-client-secret)
-
 exec /Users/evie/.nvm/versions/node/v24.14.1/bin/node \
   /Users/evie/.local/share/mcp-relay/node_modules/mcp-remote/dist/proxy.js \
   "$url" \
-  --header "CF-Access-Client-Id: $cf_id" \
-  --header "CF-Access-Client-Secret: $cf_secret"
+  --header 'CF-Access-Client-Id: ${MCP_CF_ACCESS_CLIENT_ID}' \
+  --header 'CF-Access-Client-Secret: ${MCP_CF_ACCESS_CLIENT_SECRET}'
