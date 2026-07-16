@@ -1,0 +1,10 @@
+{
+  "name": "hetzner-control-plane-ro",
+  "transport": "stdio",
+  "description": "Read-only Hetzner control-plane project tools on PCP through Cloudflare Access.",
+  "command": "/Users/evie/.local/bin/cloudflare-access-mcp-relay",
+  "args": [
+    "https://mcp-hetzner-control-plane-ro.gauthier.id/sse"
+  ],
+  "session_mode": "stateful"
+}

@@ -48,7 +48,7 @@ def classify(tool: dict) -> str:
         return READ if name.startswith("query") else ACTIONS
     if server == "github":
         return READ if read_hint else ACTIONS
-    if server == "hetzner":
+    if server in {"hetzner", "hetzner-control-plane-ro"}:
         return READ if name.startswith(("get_", "list_")) else ACTIONS
     if server == "macos":
         return READ if action_schema(tool) == {"read"} else ACTIONS

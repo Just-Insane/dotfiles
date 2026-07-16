@@ -1,11 +1,7 @@
 {
   "name": "d2",
-  "transport": "stdio",
-  "description": "D2 diagram rendering.",
-  "command": "/Users/evie/go/bin/d2-mcp",
-  "args": [
-    "-transport",
-    "stdio"
-  ],
-  "session_mode": "stateful"
+  "transport": "streamable_http",
+  "description": "D2 diagram rendering on PCP through Cloudflare Access.",
+  "url": "https://mcp-d2.gauthier.id/mcp",
+  "session_mode": "stateless"
 }

@@ -1,10 +1,7 @@
 {
   "name": "openfeature",
-  "transport": "stdio",
-  "description": "OpenFeature ecosystem and feature flag tools.",
-  "command": "/Users/evie/.nvm/versions/node/v24.14.1/bin/node",
-  "args": [
-    "/Users/evie/.local/share/mcp-relay/node_modules/@openfeature/mcp/dist/cli.js"
-  ],
-  "session_mode": "stateful"
+  "transport": "streamable_http",
+  "description": "OpenFeature ecosystem and feature flag tools on PCP through Cloudflare Access.",
+  "url": "https://mcp-openfeature.gauthier.id/mcp",
+  "session_mode": "stateless"
 }
