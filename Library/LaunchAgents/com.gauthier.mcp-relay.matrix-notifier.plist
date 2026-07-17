@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gauthier.mcp-relay.matrix-notifier</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/evie/.local/share/mcp-relay/run-matrix-notifier</string>
+    <string>http</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOST</key>
+    <string>127.0.0.1</string>
+    <key>PATH</key>
+    <string>/Users/evie/.nvm/versions/node/v26.4.0/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>PORT</key>
+    <string>8944</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/evie/Library/Logs/mcp-relay/matrix-notifier.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/evie/Library/Logs/mcp-relay/matrix-notifier.err.log</string>
+</dict>
+</plist>

@@ -1,0 +1,6 @@
+{
+  "name": "matrix-notifier",
+  "transport": "streamable_http",
+  "description": "Fixed-destination encrypted Matrix notification broker running as the Claude Bot identity.",
+  "url": "http://127.0.0.1:8944/mcp"
+}

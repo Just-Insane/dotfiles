@@ -54,6 +54,8 @@ def classify(tool: dict) -> str:
         return READ if action_schema(tool) == {"read"} else ACTIONS
     if server == "matrix-server":
         return READ if read_hint else ACTIONS
+    if server == "matrix-notifier":
+        return ACTIONS
     if server == "obsidian":
         return READ if name.startswith(("get_", "list_", "read_", "search_")) else ACTIONS
     if server == "omnifocus":

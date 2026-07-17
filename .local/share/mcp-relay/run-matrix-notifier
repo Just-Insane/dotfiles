@@ -1,0 +1,24 @@
+#!/bin/zsh
+set -eu
+
+mode="${1:-stdio}"
+server="$HOME/.local/share/mcp-relay/matrix-notifier-server"
+token=$($HOME/.local/bin/vault-runtime-secret matrix-notifier MATRIX_ACCESS_TOKEN)
+mkdir -p "$HOME/.local/share/mcp-relay/matrix-notifier-data"
+
+case "$mode" in
+  stdio) entrypoint="$server/dist/stdio-server.js" ;;
+  http) entrypoint="$server/dist/http-server.js" ;;
+  *) print -u2 "unsupported Matrix notifier mode: $mode"; exit 64 ;;
+esac
+
+exec /usr/bin/env \
+  MATRIX_ACCESS_TOKEN="$token" \
+  MATRIX_DATA_DIR="$HOME/.local/share/mcp-relay/matrix-notifier-data" \
+  MATRIX_HOMESERVER_URL="https://matrix.cloudhub.social" \
+  MATRIX_NOTIFICATION_ONLY="true" \
+  MATRIX_NOTIFICATION_ROOM_ID="!X-sbLMCJgOIxkUfEqwGlNX51FS0Bu4xqkXyyxGLwIYE" \
+  MATRIX_RESTORE_KEY_BACKUP="false" \
+  MATRIX_USER_ID="@claude-bot:cloudhub.social" \
+  /usr/bin/env -C "$server" \
+  "$HOME/.nvm/versions/node/v26.4.0/bin/node" "$entrypoint"

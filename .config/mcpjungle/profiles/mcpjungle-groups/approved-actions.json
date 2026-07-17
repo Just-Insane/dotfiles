@@ -229,6 +229,7 @@
     "macos__notes_items",
     "macos__reminders_lists",
     "macos__reminders_tasks",
+    "matrix-notifier__send-notification",
     "matrix-server__create-room",
     "matrix-server__edit-message",
     "matrix-server__get-queued-messages",
