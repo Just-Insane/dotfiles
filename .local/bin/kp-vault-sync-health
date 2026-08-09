@@ -1,0 +1,47 @@
+#!/bin/zsh
+set -u
+
+repository=/Users/evie/git/Knowledge-Platform
+state_directory="/Users/evie/Library/Application Support/Knowledge-Platform"
+state_file="$state_directory/sync-health.json"
+alert_file="$state_directory/sync-health-alert-at"
+mkdir -p "$state_directory"
+
+output=$(/usr/bin/python3 "$repository/_meta/tools/kp_vault_sync_health.py" \
+  --repository "$repository" \
+  --fetch \
+  --state-file "$state_file" 2>&1)
+probe_status=$?
+print -r -- "$output"
+if (( probe_status == 0 )); then
+  exit 0
+fi
+
+error_class=$(/usr/bin/python3 -c \
+  'import json, sys; print(json.load(open(sys.argv[1])).get("error_class") or "unknown")' \
+  "$state_file" 2>/dev/null || print unknown)
+now=$(/bin/date +%s)
+remote_epoch=$(/usr/bin/git -C "$repository" show -s --format=%ct refs/remotes/origin/main 2>/dev/null || print 0)
+remote_age=$(( now - remote_epoch ))
+
+# A newly observed remote commit gets one normal Obsidian Git interval before
+# alerting. Dirty, diverged, conflicted, and command-failure states alert
+# immediately because waiting cannot safely repair them.
+if [[ "$error_class" == remote_commits_missing ]] && (( remote_age < 900 )); then
+  exit "$probe_status"
+fi
+
+last_alert=0
+if [[ -r "$alert_file" ]]; then
+  read -r last_alert <"$alert_file"
+fi
+if [[ ! "$last_alert" =~ ^[0-9]+$ ]]; then
+  last_alert=0
+fi
+if (( now - last_alert >= 3600 )); then
+  print -r -- "$now" >"$alert_file"
+  /usr/bin/logger -t kp-vault-sync-health "state requires attention: $error_class"
+  /usr/bin/osascript -e 'display notification "Git-to-vault delivery needs attention. Check the payload-free sync health report." with title "Knowledge-Platform sync"' >/dev/null
+fi
+exit "$probe_status"
+
