@@ -39,6 +39,11 @@ with the live registry so runtime drift fails validation. The FastMCP catalog
 is the sole exception: its live HTTP registration contains an authorization
 header and must be reconstructed from Keychain rather than committed.
 
+`of.json` deliberately duplicates the OmniFocus provider under a short server
+name. Direct Mac profiles continue to use the descriptive `omnifocus` name;
+PCP's nested Mac-satellite groups use `of` so the final MCPJungle tool names
+stay within Cloudflare MCP Portal's 40-character limit.
+
 Sensitive reads are deliberately routed through `approved-actions`. This
 includes Bitwarden vault contents, SSH file transfer and execution, tmux
 session mutation, Matrix actions, and any multiplexed tool that can write based
