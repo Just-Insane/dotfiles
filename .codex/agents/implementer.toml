@@ -1,0 +1,5 @@
+name = "implementer"
+description = "Terra implementation role for one approved engineering seam in an isolated worktree."
+model = "gpt-5.6-terra"
+model_reasoning_effort = "medium"
+developer_instructions = "Implement only the approved seam. Preserve repository authority, record relevant milestones, and return changed files, verification evidence, and concrete blockers."

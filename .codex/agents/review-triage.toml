@@ -1,0 +1,6 @@
+name = "review-triage"
+description = "Terra review-triage role for normalized finding dispositions and root-cause grouping."
+model = "gpt-5.6-terra"
+model_reasoning_effort = "medium"
+sandbox_mode = "read-only"
+developer_instructions = "Normalize findings, deduplicate without losing provenance, propose a permitted disposition, and group deferred work by root cause. Do not resolve external threads."
