@@ -1,0 +1,19 @@
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -10,9 +10,13 @@
+ async function main() {
+     const config = loadConfig();
+     const server = createServer(config);
+-    // Warm contact cache before connecting transport.
+-    // Fire-and-forget: cache builds concurrently with stdio handshake.
+-    void contactResolver.warmCache();
++    // Contacts are only needed by tools that request contact enrichment or a
++    // contact lookup. Do not block unrelated Mail/Calendar MCP calls on an
++    // AddressBook SQLite scan; an operator can opt back into prewarming for a
++    // long-lived local session.
++    if (process.env.MCP_MACOS_PREWARM_CONTACTS === '1') {
++        void contactResolver.warmCache();
++    }
+     const transport = new StdioServerTransport();
+     await server.connect(transport);
+ }
