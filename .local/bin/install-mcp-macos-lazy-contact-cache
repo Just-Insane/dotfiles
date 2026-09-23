@@ -28,7 +28,9 @@ trap 'rm -rf "$stage"' EXIT
 cp -R "$source_dir" "$stage/mcp-macos"
 patch -d "$stage/mcp-macos" -p1 < "$patch_file"
 node --check "$stage/mcp-macos/dist/index.js"
+node --check "$stage/mcp-macos/dist/tools/handlers/mailHandlers.js"
 grep -Fq "MCP_MACOS_PREWARM_CONTACTS === '1'" "$stage/mcp-macos/dist/index.js"
+grep -Fq 'Mail.accounts.whose({id: \"{{account}}\"})' "$stage/mcp-macos/dist/tools/handlers/mailHandlers.js"
 
 if [[ -e "$overlay_dir" ]]; then
   backup="$overlay_dir.previous"
