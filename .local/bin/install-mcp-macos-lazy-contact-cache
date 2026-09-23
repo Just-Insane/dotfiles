@@ -1,0 +1,39 @@
+#!/bin/bash
+# Build a reviewed mcp-macos@4.1.0 overlay outside node_modules. This keeps
+# the upstream package intact and makes both installation and rollback
+# explicit. The tracked MCPJungle profile points at this overlay.
+set -euo pipefail
+
+runtime="$HOME/.local/share/mcp-relay"
+source_dir="$runtime/node_modules/mcp-macos"
+overlay_root="$runtime/overrides"
+overlay_dir="$overlay_root/mcp-macos-4.1.0-lazy-contact-cache"
+profile_root="$HOME/.config/mcpjungle/profiles"
+patch_file="$profile_root/patches/mcp-macos-4.1.0-lazy-contact-cache.patch"
+
+if [[ "${1:-}" == "--rollback" ]]; then
+  rm -rf "$overlay_dir"
+  echo "Removed $overlay_dir. Re-register macos with the upstream profile before restarting MCPJungle."
+  exit 0
+fi
+
+[[ -r "$source_dir/package.json" ]] || { echo "mcp-macos runtime package is missing" >&2; exit 1; }
+[[ -r "$patch_file" ]] || { echo "tracked lazy-contact-cache patch is missing" >&2; exit 1; }
+version="$(node -p "require(process.argv[1]).version" "$source_dir/package.json")"
+[[ "$version" == "4.1.0" ]] || { echo "refusing unreviewed mcp-macos version: $version" >&2; exit 1; }
+
+mkdir -p "$overlay_root"
+stage="$(mktemp -d "$overlay_root/.mcp-macos-stage.XXXXXX")"
+trap 'rm -rf "$stage"' EXIT
+cp -R "$source_dir" "$stage/mcp-macos"
+patch -d "$stage/mcp-macos" -p1 < "$patch_file"
+node --check "$stage/mcp-macos/dist/index.js"
+grep -Fq "MCP_MACOS_PREWARM_CONTACTS === '1'" "$stage/mcp-macos/dist/index.js"
+
+if [[ -e "$overlay_dir" ]]; then
+  backup="$overlay_dir.previous"
+  rm -rf "$backup"
+  mv "$overlay_dir" "$backup"
+fi
+mv "$stage/mcp-macos" "$overlay_dir"
+echo "Installed reviewed mcp-macos overlay at $overlay_dir"

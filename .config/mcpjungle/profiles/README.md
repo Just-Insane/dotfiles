@@ -39,6 +39,12 @@ with the live registry so runtime drift fails validation. The FastMCP catalog
 is the sole exception: its live HTTP registration contains an authorization
 header and must be reconstructed from Keychain rather than committed.
 
+`mcp-macos` has a reviewed `4.1.0` overlay for the Contacts-cache startup
+regression. Run `~/.local/bin/install-mcp-macos-lazy-contact-cache` before
+registering the tracked `macos.json`; it builds outside `node_modules` and
+only accepts that exact upstream version. Its `--rollback` removes the overlay;
+restore the upstream profile before restarting MCPJungle.
+
 `of.json` deliberately duplicates the OmniFocus provider under a short server
 name. Direct Mac profiles continue to use the descriptive `omnifocus` name;
 PCP's nested Mac-satellite groups use `of` so the final MCPJungle tool names
