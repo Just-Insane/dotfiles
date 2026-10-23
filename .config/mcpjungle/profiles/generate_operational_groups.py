@@ -76,6 +76,22 @@ def classify(tool: dict) -> str:
         return READ if name == "list-servers" else ACTIONS
     if server == "tmux":
         return READ if name.startswith(("capture-", "find-", "get-", "list-")) else ACTIONS
+    if server == "zaungast":
+        # Reviewed read-only cache tools in zaungast 0.5.0; unknown names fail closed.
+        cache_reads = {
+            "list_conversations",
+            "read_conversation",
+            "read_thread",
+            "get_message",
+            "search",
+            "rank_topics",
+            "find_person",
+            "list_events",
+            "list_calls",
+            "describe_schema",
+        }
+        if name in cache_reads:
+            return READ
     raise ValueError(f"unclassified server/tool: {server}__{name}")
 
 

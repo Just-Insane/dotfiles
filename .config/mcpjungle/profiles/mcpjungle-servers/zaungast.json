@@ -1,0 +1,14 @@
+{
+  "name": "zaungast",
+  "transport": "stdio",
+  "session_mode": "stateful",
+  "command": "/Users/evie/.nvm/versions/node/v24.14.1/bin/node",
+  "args": [
+    "/Users/evie/.local/share/mcp-relay/zaungast-0.5.0/node_modules/zaungast/dist/index.js"
+  ],
+  "env": {
+    "ZAUNGAST_ENGINE": "js",
+    "TEAMS_LEVELDB_DIR": "/Users/evie/Library/Containers/com.microsoft.teams2/Data/Library/Application Support/Microsoft/MSTeams/EBWebView/WV2Profile_tfw/IndexedDB/https_teams.microsoft.com_0.indexeddb.leveldb"
+  },
+  "description": "Read-only Microsoft Teams desktop cache on this Mac. Local cached coverage only; no Graph API or Microsoft credentials."
+}
