@@ -1,0 +1,74 @@
+--- a/zaungast/dist/server.js
++++ b/zaungast/dist/server.js
+@@ -2,6 +2,7 @@
+ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+ import { TOOLS } from './tools.js';
+ import { captureEnvelope } from './capture-envelope.mjs';
++import { enumerationEnvelope } from './enumeration-envelope.mjs';
+ // The render timezone is resolved ONCE from the host (this is a local server; the machine's zone is
+ // the user's zone). `now` is sampled per dispatch. Together they form the RenderCtx passed to every
+ // query tool, so rendering never reads the ambient process timezone/clock implicitly.
+@@ -25,6 +26,10 @@
+                         },
+                     ],
+                 };
++            }
++            if (args.capture && ['list_conversations', 'read_conversation'].includes(tool.name)) {
++                const result = enumerationEnvelope(view, tool.name, args, ctx.now);
++                return {content: [{type:'text', text: result.status === 'observed' ? 'Bounded local cache capture page; provider history remains unverified.' : `Cache capture unavailable: ${result.reason}`}], structuredContent: result};
+             }
+             return {
+                 content: [{ type: 'text', text: tool.run(view, args, ctx) }],
+--- a/zaungast/dist/schemas.js
++++ b/zaungast/dist/schemas.js
+@@ -4,6 +4,10 @@
+ // schema/tool-signature mismatch is a compile error, not a silent runtime bug.
+ const kindEnum = z.enum(['1:1', 'group', 'channel', 'meeting']);
+ export const listConversationsShape = {
++    capture: z.boolean().optional().describe('Opt in to structured bounded local-cache enumeration.'),
++    capture_cursor: z.string().max(8192).optional().describe('Opaque structured capture continuation; separate from human browse cursor.'),
++    expected_account_id: z.string().min(1).max(2048).optional().describe('Required native account pin for capture.'),
++
+     n: z.number().int().min(1).max(30).optional().describe('how many (default 12)'),
+     kind: z.enum(['1:1', 'group', 'channel', 'meeting', 'other']).optional(),
+     query: z.string().optional().describe('match conversation title or participant'),
+@@ -15,6 +19,11 @@
+         .describe('include 0-message conversations (team roots); off by default'),
+ };
+ export const readConversationShape = {
++    capture: z.boolean().optional().describe('Opt in to structured bounded local-cache enumeration.'),
++    capture_cursor: z.string().max(8192).optional().describe('Opaque structured capture continuation; separate from human browse cursor.'),
++    expected_account_id: z.string().min(1).max(2048).optional().describe('Required native account pin for capture.'),
++    expected_conversation_id: z.string().min(1).max(2048).optional().describe('Required native conversation pin for capture.'),
++
+     conversation: z.string().describe('conversation handle (c:xxxx) or title/participant substring'),
+     limit: z.number().int().min(1).max(200).optional().describe('default 40'),
+     since: z.string().optional(),
+--- a/libzaungast/dist/query.js
++++ b/libzaungast/dist/query.js
+@@ -242,7 +242,7 @@
+             .all(convId, a.ts, half);
+         return { rows: [...before.toReversed(), ...after] };
+     }
+-    const conds = ['conv_id=?', 'is_system=0'];
++    const conds = opts.captureIncludeSystem === true ? ['conv_id=?'] : ['conv_id=?', 'is_system=0'];
+     const params = [convId];
+     if (opts.sinceTs) {
+         conds.push('ts>=?');
+@@ -415,10 +415,15 @@
+         where.push('last_ts>=?');
+         params.push(opts.sinceTs);
+     }
++    if (opts.captureOrder === true && opts.captureAfter) {
++        where.push('id>?');
++        params.push(opts.captureAfter);
++    }
++    const order = opts.captureOrder === true ? 'id collate binary asc' : 'last_ts desc';
+     const w = where.length ? 'where ' + where.join(' and ') : '';
+     const rows = db
+         .prepare(`select ${CONV_COLS}
+-     from conversations ${w} order by last_ts desc limit ?`)
++     from conversations ${w} order by ${order} limit ?`)
+         .all(...params, n);
+     return rows.map(toConversation);
+ }
