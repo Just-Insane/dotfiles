@@ -92,3 +92,71 @@ Coordinate the existing Teams-only process/session restart through the parent;
 never run broad bootstrap or reset satr/sata. Requalify exact ten-tool inventory,
 existing text responses and one bounded structured read before PCP admission.
 No installed file, running process, registry or group was changed by this preparation.
+
+## Resumable cache enumeration
+
+`enumeration-0.5.0.patch` applies **after** the original structured-message patch.
+It extends the existing `list_conversations` and `read_conversation` tools with an
+opt-in `capture:true` mode. Their ordinary text responses and original arguments
+remain unchanged, as do all ten tool names and registrations. It adds no server,
+Graph client, permission, credential, sign-in or cache location.
+
+Both requests require `expected_account_id` matching the pinned view's `selfMri`.
+List requests accept `n` (1–30); `include_empty` is ignored in capture mode because
+all accessible conversation rows are enumerated, including empty roots. Read
+requests require `expected_conversation_id`; native identity is authoritative over
+short display handles, which may change after a cache refresh. `conversation`
+remains required by the legacy schema. Read `limit` is 1–200 (default 50).
+`capture_cursor` is separate from legacy `cursor`. Date, person, kind and human
+cursor filters fail closed in capture mode.
+
+Structured responses use `teams-cache-conversations/v1` or
+`teams-cache-messages/v1`, `status:observed`, exact `account_id`, `observed_at`,
+`cache_as_of`, `may_be_stale`, `lossy`, `gaps:[{code,detail}]`, `next_cursor`,
+`cache_complete` and `provider_complete:false`. Conversation entries are
+`{conversation_id,conversation,kind}`. Read responses also have `conversation_id`
+and `messages` containing unchanged `teams-cache-message/v1` observations.
+Unavailable reads return `{schema,status:"unavailable",reason}` with a static
+reason, never private content.
+
+The library patch adds opt-in SQL keysets: conversations by binary native ID,
+messages by `(timestamp, native ID)` descending. Message capture includes channel
+replies and system rows. Each SQL request is bounded to one page plus a lookahead;
+no full-cache materialization or offset scan is used. Cursors bind account and
+conversation and reject malformed or cross-scope values. The continuation tuple
+survives disappearance of the previous message. New items behind an already passed
+keyset are found on the next complete sweep; a sweep is not an atomic snapshot of
+a changing cache and is never proof of full provider history.
+
+A page is below 1 MB. Messages retain the prior 128000-byte JSON bound. Oversized
+messages advance the cursor with `MESSAGE_TOO_LARGE`, never silently disappearing
+from coverage. A discovered conversation later absent from cache returns an empty
+exhausted page and `CONVERSATION_NOT_CACHED`; deletion remains unknown. Consumers
+must accumulate gaps across pages/sweeps and distinguish cache enumeration
+exhaustion from completeness of captured bodies or provider history.
+
+### Qualification and guarded rollout
+
+Prepare a separate copy of **both** installed 0.5.0 packages; the library query is
+part of this reviewed reader change. Before applying the patch, verify these
+installed prerequisite SHA-256 values:
+
+- `zaungast/dist/server.js`: `1e520bff3b8617d06419e265bb10e63c76cb6f5bcb3946e1712e5d08ec71ddb6`
+- `zaungast/dist/schemas.js`: `c13581d9de7049e44504bae5af36588c7a3d25a23f6ed335a6a56872df3603e0`
+- `libzaungast/dist/query.js`: `53082765d2a8378816888577b254f40f34347bc8dc8adb3bf49e0397037b0cd9`
+
+Apply `patch -p1 < enumeration-0.5.0.patch` from staged `node_modules`, then copy
+`enumeration-envelope.mjs` into staged `zaungast/dist/`. The prior capture helper
+must remain identical. Run `node --test *test.mjs` here and
+`node qualify-enumeration.mjs /absolute/staged/node_modules`. Qualification uses
+synthetic in-memory fixtures and SQLite, never Teams files or network. It verifies
+65 conversations, 205 tied-timestamp messages including system rows, SQL keysets,
+SDK schema/transport, all ten names and unchanged legacy text.
+
+After protected review/merge, coordinate a Teams-only reader restart and guarded
+swap of both packages, preserving both originals. Do not change group grants,
+registrations or other satellite sessions. Verify the additive schemas and bounded
+structured reads through the existing route before deploying the PCP consumer.
+If any operation is uncertain, reconcile package hashes and exact process state
+before retrying. Restore both originals together for rollback; retain canonical
+PCP evidence and checkpoints. This source change itself performs no rollout.
