@@ -1,0 +1,38 @@
+--- a/dist/server.js
++++ b/dist/server.js
+@@ -1,6 +1,7 @@
+ import { readFileSync } from 'node:fs';
+ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+ import { TOOLS } from './tools.js';
++import { captureEnvelope } from './capture-envelope.mjs';
+ // The render timezone is resolved ONCE from the host (this is a local server; the machine's zone is
+ // the user's zone). `now` is sampled per dispatch. Together they form the RenderCtx passed to every
+ // query tool, so rendering never reads the ambient process timezone/clock implicitly.
+@@ -11,7 +12,7 @@
+ export const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
+ export function buildServer(live) {
+     const server = new McpServer({ name: 'zaungast', version: VERSION });
+-    const runQuery = (fn, args) => {
++    const runQuery = (tool, args) => {
+         try {
+             const view = live.current(); // one probe/refresh decision → a pinned, consistent reading
+             const ctx = { tz: RENDER_TZ, now: Date.now() };
+@@ -26,7 +27,8 @@
+                 };
+             }
+             return {
+-                content: [{ type: 'text', text: fn(view, args, ctx) }],
++                content: [{ type: 'text', text: tool.run(view, args, ctx) }],
++                structuredContent: captureEnvelope(view, tool.name, args, ctx.now),
+             };
+         }
+         catch (e) {
+@@ -52,7 +54,7 @@
+         }
+     };
+     for (const tool of TOOLS) {
+-        server.registerTool(tool.name, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema }, async (args) => tool.kind === 'query' ? runQuery(tool.run, args) : runRaw(tool.run, args));
++        server.registerTool(tool.name, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema }, async (args) => tool.kind === 'query' ? runQuery(tool, args) : runRaw(tool.run, args));
+     }
+     return server;
+ }

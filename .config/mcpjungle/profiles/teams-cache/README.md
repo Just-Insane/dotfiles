@@ -68,3 +68,27 @@ all other fields, and refresh that portal's schema. Then remove the dedicated
 satt registration and the Teams-only Mac group/client/server if desired. Retain
 Teams' own cache and the existing Mail/calendar satellite registrations. Do not
 restore a whole registry database or reset other source changes.
+
+## Structured capture preparation (not activated)
+
+`server-0.5.0.patch` adds `structuredContent` only to `get_message` from the
+same pinned `live.current()` view used by the existing text renderer. The helper
+`capture-envelope.mjs` exposes native IDs and exact source timestamps, bounds
+one message to 128 KB, and reports reader-text completeness, unknown provider
+revision/deletion and partial cache coverage. All ten existing names, arguments,
+text responses and read-only classifications remain. The public facade does not
+expose its internal provider version; no version or tombstone is invented.
+`account_id` is the reader's `meta.selfMri` attribution, not an independently
+verified tenant/account claim. Missing identity or ambiguous selection fails closed.
+
+Run `node --test capture-envelope.test.mjs` offline. Apply only after coordinated
+provider rollout approval: verify installed zaungast/libzaungast versions 0.5.0
+and the unmodified `zaungast/dist/server.js` SHA-256
+`46369fbdb0720f7a4d264759c040706ab2ab2f24dfed67e874162e4ffdab732a`,
+copy the helper to `zaungast/dist/capture-envelope.mjs`, then apply the checked-in
+patch from the zaungast package directory. Prepare a separate staged package
+first; do not patch a running instance. Preserve the original package for rollback.
+Coordinate the existing Teams-only process/session restart through the parent;
+never run broad bootstrap or reset satr/sata. Requalify exact ten-tool inventory,
+existing text responses and one bounded structured read before PCP admission.
+No installed file, running process, registry or group was changed by this preparation.
